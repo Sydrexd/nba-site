@@ -179,7 +179,7 @@
     </main>
 
     <script>
-        // --- 1. VERİ YAPILARI ---
+        // --- 1. SABİT VERİLER (AYARLAR) ---
         const teamsDB = {
             'LAL': { name: 'Lakers', color: '#552583', id: '1610612747' },
             'BOS': { name: 'Celtics', color: '#007A33', id: '1610612738' },
@@ -188,7 +188,29 @@
             'MIA': { name: 'Heat', color: '#98002E', id: '1610612748' },
             'DEN': { name: 'Nuggets', color: '#0E2240', id: '1610612743' },
             'DAL': { name: 'Mavericks', color: '#00538C', id: '1610612742' },
-            'PHI': { name: '76ers', color: '#006BB6', id: '1610612755' }
+            'PHI': { name: '76ers', color: '#006BB6', id: '1610612755' },
+            'MIL': { name: 'Bucks', color: '#00471B', id: '1610612749' },
+            'OKC': { name: 'Thunder', color: '#007AC1', id: '1610612760' },
+            'MIN': { name: 'Timberwolves', color: '#0C2340', id: '1610612750' },
+            'HOU': { name: 'Rockets', color: '#CE1141', id: '1610612745' },
+            'LAC': { name: 'Clippers', color: '#C8102E', id: '1610612746' },
+            'NYK': { name: 'Knicks', color: '#F58426', id: '1610612752' },
+            'BKN': { name: 'Nets', color: '#000000', id: '1610612751' },
+            'CLE': { name: 'Cavaliers', color: '#860038', id: '1610612739' },
+            'SAC': { name: 'Kings', color: '#5A2D81', id: '1610612758' },
+            'NOP': { name: 'Pelicans', color: '#0C2340', id: '1610612740' },
+            'SAS': { name: 'Spurs', color: '#C4CED4', id: '1610612759' },
+            'TOR': { name: 'Raptors', color: '#CE1141', id: '1610612761' },
+            'UTA': { name: 'Jazz', color: '#002B5C', id: '1610612762' },
+            'MEM': { name: 'Grizzlies', color: '#5D76A9', id: '1610612763' },
+            'WAS': { name: 'Wizards', color: '#002B5C', id: '1610612764' },
+            'DET': { name: 'Pistons', color: '#C8102E', id: '1610612765' },
+            'CHA': { name: 'Hornets', color: '#1D1160', id: '1610612766' },
+            'IND': { name: 'Pacers', color: '#002D62', id: '1610612754' },
+            'ORL': { name: 'Magic', color: '#0077C0', id: '1610612753' },
+            'CHI': { name: 'Bulls', color: '#CE1141', id: '1610612741' },
+            'ATL': { name: 'Hawks', color: '#E03A3E', id: '1610612737' },
+            'POR': { name: 'Blazers', color: '#E03A3E', id: '1610612757' }
         };
 
         const contentDB = {
@@ -196,70 +218,108 @@
                 nav: { home: "Home", games: "Games", stats: "Statistics", injuries: "Injuries", lineups: "Lineups" },
                 titles: { news: "Latest News", games: "Games & Odds", stats: "Statistics Leaders", injuries: "Injury Report", lineups: "Starting Lineups" },
                 news: [
-                    { title: "Embiid Drops 50 Points", desc: "The reigning MVP continues his dominance against Washington." },
-                    { title: "Trade Rumors Intensify", desc: "Chicago Bulls are actively looking for trade partners." }
+                    { title: "Season Updates", desc: "Check out the latest live scores and statistics from the 2024-2025 season." },
+                    { title: "Playoff Race", desc: "The competition for the top seeds is heating up as teams battle for position." }
                 ],
-                labels: { prediction: "AI Model", win: "Win" }
+                labels: { prediction: "Prediction", win: "Win" },
+                status: { scheduled: "Scheduled", live: "LIVE", final: "Final" }
             },
             tr: {
                 nav: { home: "Ana Sayfa", games: "Maçlar", stats: "İstatistikler", injuries: "Sakatlıklar", lineups: "Kadrolar" },
                 titles: { news: "Son Haberler", games: "Maçlar & Beklentiler", stats: "İstatistik Liderleri", injuries: "Sakatlık Raporu", lineups: "İlk 5'ler" },
                 news: [
-                    { title: "Embiid'den 50 Sayı", desc: "Son MVP, Washington karşısında dominasyonunu sürdürüyor." },
-                    { title: "Takas Dedikoduları Artıyor", desc: "Chicago Bulls aktif olarak takas partneri arıyor." }
+                    { title: "Sezon Güncellemeleri", desc: "2024-2025 sezonundan en son canlı skorları ve istatistikleri takip edin." },
+                    { title: "Playoff Yarışı", desc: "Takımlar üst sıralar için mücadele ederken rekabet kızışıyor." }
                 ],
-                labels: { prediction: "YZ Modeli", win: "Kazanır" }
+                labels: { prediction: "Tahmin", win: "Kazanır" },
+                status: { scheduled: "Başlamadı", live: "CANLI", final: "Bitti" }
             }
         };
 
         let currentLang = 'tr';
 
-        // --- 2. MOCK API (VERİ SİMÜLASYONU) ---
-        async function fetchNBAData(endpoint) {
-            await new Promise(r => setTimeout(r, 200)); // Hafif gecikme
+        // --- 2. GERÇEK API BAĞLANTISI ---
+        async function fetchNBAData(endpoint, statCategory = 'PTS') {
+            try {
+                // Vercel üzerinden kurduğumuz Proxy'ye istek atıyoruz
+                // Örnek: /api/nba?type=stats&category=PTS
+                const url = `/api/nba?type=${endpoint}&category=${statCategory}`;
+                const response = await fetch(url);
+                
+                if (!response.ok) throw new Error("Veri alınamadı");
+                const json = await response.json();
+                
+                // --- VERİ DÖNÜŞTÜRME (PARSING) ---
+                
+                // 1. İSTATİSTİKLERİ İŞLE
+                if (endpoint === 'stats') {
+                    // NBA API'si verileri "resultSet" içinde "rowSet" olarak verir.
+                    // Bu karmaşık yapıyı bizim basit yapıya çeviriyoruz.
+                    const headers = json.resultSet.headers;
+                    const rows = json.resultSet.rowSet;
+                    
+                    // İndeksleri bul (Çünkü sıra değişebilir)
+                    const iRank = headers.indexOf('RANK');
+                    const iName = headers.indexOf('PLAYER_NAME');
+                    const iTeam = headers.indexOf('TEAM_ABBREVIATION');
+                    const iVal = headers.indexOf(statCategory); // PTS, AST veya REB
+                    const iId = headers.indexOf('PLAYER_ID');
 
-            if (endpoint === 'stats') {
-                return {
-                    PTS: [{ r: 1, n: "Joel Embiid", t: "PHI", v: 33.8, i: "203954" }, { r: 2, n: "Luka Doncic", t: "DAL", v: 32.9, i: "1629029" }],
-                    AST: [{ r: 1, n: "Tyrese Haliburton", t: "IND", v: 12.0, i: "1630169" }, { r: 2, n: "Trae Young", t: "ATL", v: 10.8, i: "1629027" }],
-                    REB: [{ r: 1, n: "Anthony Davis", t: "LAL", v: 12.6, i: "203076" }, { r: 2, n: "Nikola Jokic", t: "DEN", v: 12.3, i: "203999" }]
-                };
-            }
-            if (endpoint === 'games') {
-                return [
-                    { id: 1, home: 'LAL', away: 'BOS', hS: 85, aS: 92 },
-                    { id: 2, home: 'PHX', away: 'DAL', hS: 88, aS: 87 }
-                ];
-            }
-            if (endpoint === 'injuries') {
-                return [
-                    { name: "Bradley Beal", team: "PHX", status: "Out", type: "Back", return: "Late Dec", code: "out" },
-                    { name: "Kyrie Irving", team: "DAL", status: "Day-to-Day", type: "Heel", return: "Questionable", code: "dtd" },
-                    { name: "Bam Adebayo", team: "MIA", status: "Out", type: "Hip", return: "Next Week", code: "out" }
-                ];
+                    // İlk 5 oyuncuyu al ve map et
+                    return rows.slice(0, 5).map(row => ({
+                        r: row[iRank],
+                        n: row[iName],
+                        t: row[iTeam],
+                        v: row[iVal],
+                        i: row[iId]
+                    }));
+                }
+
+                // 2. MAÇLARI İŞLE
+                if (endpoint === 'scoreboard') {
+                    // Eğer maç yoksa boş dizi döndür
+                    if(!json.scoreboard || !json.scoreboard.games) return [];
+
+                    return json.scoreboard.games.map(game => {
+                        return {
+                            id: game.gameId,
+                            home: game.homeTeam.teamTricode,
+                            away: game.awayTeam.teamTricode,
+                            status: game.gameStatusText, // Örn: "Final" veya "7:00 pm ET"
+                            // Canlı veri olmadığı için oranları rastgele/simüle üretiyoruz (Gerçek bahis API'si paralı olduğu için)
+                            hS: Math.floor(Math.random() * 20) + 40, // Güç simülasyonu
+                            aS: Math.floor(Math.random() * 20) + 40
+                        };
+                    });
+                }
+                
+                return [];
+
+            } catch (error) {
+                console.error("API Hatası:", error);
+                return []; // Hata olursa boş döndür ki site çökmesin
             }
         }
 
         // --- 3. UYGULAMA MANTIĞI ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Güvenli başlatma
             initApp();
             
-            // Eğer kod bir yerde hata verirse ekran takılmasın diye emniyet kilidi
+            // Güvenlik kilidi: Giriş animasyonu takılırsa 3 sn sonra zorla kapat
             setTimeout(() => {
                 const overlay = document.getElementById('intro-overlay');
-                if(overlay && overlay.style.display !== 'none') {
+                if(overlay && overlay.style.opacity !== '0') {
                     overlay.style.opacity = '0';
                     setTimeout(() => { overlay.style.display = 'none'; }, 500);
                 }
-            }, 2500);
+            }, 3000);
         });
 
         async function initApp() {
             await renderAll();
-            await loadStats('PTS');
+            await loadStats('PTS'); // İlk açılışta sayı krallığı
             
-            // Veriler yüklendi, animasyonu kapat
+            // Veriler geldi, animasyonu kapat
             const overlay = document.getElementById('intro-overlay');
             overlay.style.opacity = '0';
             setTimeout(() => { overlay.style.display = 'none'; }, 500);
@@ -275,13 +335,16 @@
         function toggleLang() {
             currentLang = currentLang === 'tr' ? 'en' : 'tr';
             renderAll();
-            loadStats('PTS'); // İstatistik başlıkları için
+            // Aktif olan istatistik butonunu bul ve yenile
+            const activeBtn = document.querySelector('.filter-btn.active');
+            const cat = activeBtn ? activeBtn.getAttribute('onclick').match(/'([^']+)'/)[1] : 'PTS';
+            loadStats(cat);
         }
 
         async function renderAll() {
             const data = contentDB[currentLang];
             
-            // Textler
+            // Text güncellemeleri
             Object.keys(data.nav).forEach(k => document.getElementById('btn-'+k).innerText = data.nav[k]);
             Object.keys(data.titles).forEach(k => document.getElementById('title-'+k).innerText = data.titles[k]);
 
@@ -290,69 +353,69 @@
                 `<div class="news-card"><h3 style="margin-top:0">${n.title}</h3><p style="color:#ccc;margin:0">${n.desc}</p></div>`
             ).join('');
 
-            // Maçlar
-            const games = await fetchNBAData('games');
+            // Maçları Çek (Scoreboard)
+            const games = await fetchNBAData('scoreboard');
             const gCon = document.getElementById('games-container');
             gCon.innerHTML = '';
-            games.forEach(g => {
-                if(!teamsDB[g.home] || !teamsDB[g.away]) return;
-                const hT = teamsDB[g.home], aT = teamsDB[g.away];
-                const hProb = Math.round(((g.hS + 3) / (g.hS + 3 + g.aS)) * 100);
-                const pred = hProb > 50 ? `${hT.name} %${hProb}` : `${aT.name} %${100-hProb}`;
-                const logo = id => `https://cdn.nba.com/logos/nba/${id}/primary/L/logo.svg`;
 
-                gCon.innerHTML += `
-                    <div class="game-card">
-                        <div class="matchup-row">
-                            <div class="team-block" style="background:${aT.color}"><div class="team-content"><img src="${logo(aT.id)}" class="team-logo"><b>${aT.name}</b></div></div>
-                            <div class="vs-block">VS</div>
-                            <div class="team-block" style="background:${hT.color}"><div class="team-content"><img src="${logo(hT.id)}" class="team-logo"><b>${hT.name}</b></div></div>
-                        </div>
-                        <div class="odds-row"><div class="prediction-badge">🤖 ${data.labels.prediction}: ${pred}</div></div>
-                    </div>`;
-            });
+            if (games.length === 0) {
+                gCon.innerHTML = `<div style="text-align:center; padding:20px; color:#666;">${currentLang === 'tr' ? 'Bugün maç bulunmuyor.' : 'No games scheduled for today.'}</div>`;
+            } else {
+                games.forEach(g => {
+                    // Takım verisi yoksa (örn: All-Star takımı) varsayılan gri kullan
+                    const hT = teamsDB[g.home] || { name: g.home, color: '#333', id: '0' };
+                    const aT = teamsDB[g.away] || { name: g.away, color: '#333', id: '0' };
+                    
+                    // Tahmin Algoritması (Simüle)
+                    const hProb = Math.round(((g.hS + 5) / (g.hS + 5 + g.aS)) * 100); 
+                    const pred = hProb > 50 ? `${hT.name} %${hProb}` : `${aT.name} %${100-hProb}`;
+                    
+                    const logo = id => id !== '0' ? `https://cdn.nba.com/logos/nba/${id}/primary/L/logo.svg` : 'https://via.placeholder.com/50';
 
-            // Injuries (YENİ KISIM)
-            const injuries = await fetchNBAData('injuries');
-            const injBody = document.getElementById('injuries-body');
-            injBody.innerHTML = '';
-            injuries.forEach(inj => {
-                const badgeClass = inj.code === 'out' ? 'status-out blink' : 'status-dtd';
-                const teamData = teamsDB[inj.team] || { color: '#333' }; // Renk yoksa gri
-                
-                injBody.innerHTML += `
-                    <tr>
-                        <td>
-                            <div style="font-weight:bold; font-size:1.1rem">${inj.name}</div>
-                            <div style="color:${teamData.color}; font-size:0.9rem">${inj.team} - ${teamData.name || inj.team}</div>
-                        </td>
-                        <td>
-                            <span class="status-badge ${badgeClass}">${inj.status}</span>
-                            <div class="injury-desc">${inj.type}</div>
-                        </td>
-                        <td style="color:#ddd">${inj.return}</td>
-                    </tr>
-                `;
-            });
+                    gCon.innerHTML += `
+                        <div class="game-card">
+                            <div class="matchup-row">
+                                <div class="team-block" style="background:${aT.color}"><div class="team-content"><img src="${logo(aT.id)}" class="team-logo"><b>${aT.name}</b></div></div>
+                                <div class="vs-block">VS</div>
+                                <div class="team-block" style="background:${hT.color}"><div class="team-content"><img src="${logo(hT.id)}" class="team-logo"><b>${hT.name}</b></div></div>
+                            </div>
+                            <div class="odds-row">
+                                <div class="prediction-badge">🤖 ${data.labels.prediction}: ${pred}</div>
+                                <div style="color:#aaa; font-size:0.8rem">${g.status}</div>
+                            </div>
+                        </div>`;
+                });
+            }
         }
 
         async function loadStats(cat) {
+            // Butonların aktifliğini değiştir
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            event.target?.classList.add('active'); // null check
+            // Tıklanan butonu bulmak için category kontrolü
+            const buttons = document.querySelectorAll('.filter-btn');
+            buttons.forEach(btn => {
+                if(btn.getAttribute('onclick').includes(cat)) btn.classList.add('active');
+            });
 
-            const stats = (await fetchNBAData('stats'))[cat];
             const tbody = document.getElementById('stats-body');
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading...</td></tr>';
+
+            // Veriyi çek (Category parametresini yolla: PTS, AST, REB)
+            const stats = await fetchNBAData('stats', cat);
+            
             tbody.innerHTML = '';
             stats.forEach(p => {
+                const teamName = teamsDB[p.t] ? teamsDB[p.t].name : p.t;
                 tbody.innerHTML += `
                     <tr>
                         <td style="color:#666; font-weight:bold;">${p.r}</td>
                         <td><div class="player-cell"><img src="https://cdn.nba.com/headshots/nba/latest/260x190/${p.i}.png" class="player-headshot" onerror="this.src='https://via.placeholder.com/40'"><span>${p.n}</span></div></td>
-                        <td style="color:#aaa">${p.t}</td>
+                        <td style="color:#aaa">${teamName}</td>
                         <td class="stat-value">${p.v}</td>
                     </tr>`;
             });
         }
     </script>
 </body>
+
 </html>
