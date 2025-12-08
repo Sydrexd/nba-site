@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NBA Pro Analytics</title>
     <style>
-        /* --- TEMEL AYARLAR --- */
+        /* --- TASARIM (CSS) --- */
         :root {
             --bg-color: #121212;
             --card-bg: #1e1e1e;
@@ -23,10 +23,10 @@
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
-            overflow-x: hidden; /* Yan kaymayı engelle */
+            overflow-x: hidden;
         }
 
-        /* --- GİRİŞ ANİMASYONU (GÜVENLİ) --- */
+        /* --- GİRİŞ ANİMASYONU --- */
         #intro-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: var(--bg-color);
@@ -38,6 +38,8 @@
 
         .logo-container { text-align: center; animation: bounceIn 1.5s ease-in-out forwards; }
         .nba-logo-img { width: 100px; height: auto; }
+        
+        /* Animasyon yazısı */
         .brand-subtitle {
             font-size: 1.5rem; font-weight: 300; letter-spacing: 8px;
             color: var(--text-color); margin-top: 15px; text-transform: uppercase;
@@ -88,7 +90,7 @@
         .odds-row { padding: 15px; display: flex; justify-content: space-between; align-items: center; background-color: #252525; font-size: 0.9rem; border-top: 1px solid #333; }
         .prediction-badge { background-color: var(--secondary-color); color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 0.8rem; }
 
-        /* --- TABLO TASARIMLARI (Stats & Injuries) --- */
+        /* --- TABLO TASARIMLARI --- */
         .table-container { background-color: var(--card-bg); border-radius: 8px; overflow: hidden; margin-top: 15px; }
         table { width: 100%; border-collapse: collapse; }
         th { background-color: #252525; color: #aaa; font-weight: 600; text-align: left; padding: 15px; font-size: 0.9rem; text-transform: uppercase; }
@@ -96,7 +98,6 @@
         tr:last-child td { border-bottom: none; }
         tr:hover { background-color: var(--table-hover); }
 
-        /* Stats Player */
         .player-cell { display: flex; align-items: center; gap: 15px; }
         .player-headshot { width: 40px; height: 40px; border-radius: 50%; background-color: #333; object-fit: cover; border: 2px solid var(--accent-color); }
         .stat-value { font-size: 1.1rem; font-weight: bold; color: var(--gold); }
@@ -104,7 +105,6 @@
         .filter-btn { background: #333; border: none; color: white; padding: 8px 16px; border-radius: 20px; cursor: pointer; margin-right: 10px; transition: 0.3s; }
         .filter-btn.active { background: var(--secondary-color); }
 
-        /* Injuries Special */
         .status-badge { padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 0.8rem; display: inline-block; }
         .status-out { background-color: rgba(211, 47, 47, 0.2); color: #ff6b6b; border: 1px solid var(--status-out); }
         .status-dtd { background-color: rgba(251, 192, 45, 0.2); color: #fdd835; border: 1px solid var(--status-dtd); }
@@ -112,7 +112,6 @@
         .blink { animation: blinker 2s linear infinite; }
         @keyframes blinker { 50% { opacity: 0.6; } }
 
-        /* Haberler */
         .news-card { background: var(--card-bg); margin-bottom: 15px; padding: 20px; border-radius: 8px; border-left: 4px solid var(--secondary-color); }
     </style>
 </head>
@@ -179,7 +178,7 @@
     </main>
 
     <script>
-        // --- 1. SABİT VERİLER (AYARLAR) ---
+        // --- 1. VERİ YAPILARI ---
         const teamsDB = {
             'LAL': { name: 'Lakers', color: '#552583', id: '1610612747' },
             'BOS': { name: 'Celtics', color: '#007A33', id: '1610612738' },
@@ -194,23 +193,7 @@
             'MIN': { name: 'Timberwolves', color: '#0C2340', id: '1610612750' },
             'HOU': { name: 'Rockets', color: '#CE1141', id: '1610612745' },
             'LAC': { name: 'Clippers', color: '#C8102E', id: '1610612746' },
-            'NYK': { name: 'Knicks', color: '#F58426', id: '1610612752' },
-            'BKN': { name: 'Nets', color: '#000000', id: '1610612751' },
-            'CLE': { name: 'Cavaliers', color: '#860038', id: '1610612739' },
-            'SAC': { name: 'Kings', color: '#5A2D81', id: '1610612758' },
-            'NOP': { name: 'Pelicans', color: '#0C2340', id: '1610612740' },
-            'SAS': { name: 'Spurs', color: '#C4CED4', id: '1610612759' },
-            'TOR': { name: 'Raptors', color: '#CE1141', id: '1610612761' },
-            'UTA': { name: 'Jazz', color: '#002B5C', id: '1610612762' },
-            'MEM': { name: 'Grizzlies', color: '#5D76A9', id: '1610612763' },
-            'WAS': { name: 'Wizards', color: '#002B5C', id: '1610612764' },
-            'DET': { name: 'Pistons', color: '#C8102E', id: '1610612765' },
-            'CHA': { name: 'Hornets', color: '#1D1160', id: '1610612766' },
-            'IND': { name: 'Pacers', color: '#002D62', id: '1610612754' },
-            'ORL': { name: 'Magic', color: '#0077C0', id: '1610612753' },
-            'CHI': { name: 'Bulls', color: '#CE1141', id: '1610612741' },
-            'ATL': { name: 'Hawks', color: '#E03A3E', id: '1610612737' },
-            'POR': { name: 'Blazers', color: '#E03A3E', id: '1610612757' }
+            'NYK': { name: 'Knicks', color: '#F58426', id: '1610612752' }
         };
 
         const contentDB = {
@@ -238,91 +221,92 @@
 
         let currentLang = 'tr';
 
-        // --- 2. GERÇEK API BAĞLANTISI ---
+        // --- 2. HİBRİT VERİ SİSTEMİ (ÖNEMLİ KISIM) ---
+        // API çalışmazsa bu yedek veriler devreye girecek.
+        const FALLBACK_DATA = {
+            stats: {
+                PTS: [{ r: 1, n: "Joel Embiid", t: "PHI", v: 33.8, i: "203954" }, { r: 2, n: "Luka Doncic", t: "DAL", v: 32.9, i: "1629029" }, { r: 3, n: "Shai G. Alexander", t: "OKC", v: 31.0, i: "1628983" }],
+                AST: [{ r: 1, n: "Tyrese Haliburton", t: "IND", v: 12.0, i: "1630169" }, { r: 2, n: "Trae Young", t: "ATL", v: 10.8, i: "1629027" }],
+                REB: [{ r: 1, n: "Domantas Sabonis", t: "SAC", v: 13.2, i: "1627734" }, { r: 2, n: "Nikola Jokic", t: "DEN", v: 12.3, i: "203999" }]
+            },
+            games: [
+                { id: 101, home: 'BOS', away: 'NYK', status: 'Final', hS: 110, aS: 105 },
+                { id: 102, home: 'LAL', away: 'PHX', status: 'Live', hS: 88, aS: 92 },
+                { id: 103, home: 'DAL', away: 'GSW', status: '7:00 PM', hS: 50, aS: 50 }
+            ],
+            injuries: [
+                 { name: "Bradley Beal", team: "PHX", status: "Out", type: "Back", return: "Late Dec", code: "out" },
+                 { name: "Kyrie Irving", team: "DAL", status: "Day-to-Day", type: "Heel", return: "Questionable", code: "dtd" }
+            ]
+        };
+
         async function fetchNBAData(endpoint, statCategory = 'PTS') {
             try {
-                // Vercel üzerinden kurduğumuz Proxy'ye istek atıyoruz
-                // Örnek: /api/nba?type=stats&category=PTS
+                // 1. Önce Gerçek API'yi dene
                 const url = `/api/nba?type=${endpoint}&category=${statCategory}`;
                 const response = await fetch(url);
                 
-                if (!response.ok) throw new Error("Veri alınamadı");
+                // Eğer API 404 (Bulunamadı) veya 500 (Hata) verirse -> catch bloğuna git
+                if (!response.ok) throw new Error("API Erişilemedi");
+                
                 const json = await response.json();
                 
-                // --- VERİ DÖNÜŞTÜRME (PARSING) ---
-                
-                // 1. İSTATİSTİKLERİ İŞLE
+                // Gelen veriyi işle (API Yapısına göre)
                 if (endpoint === 'stats') {
-                    // NBA API'si verileri "resultSet" içinde "rowSet" olarak verir.
-                    // Bu karmaşık yapıyı bizim basit yapıya çeviriyoruz.
-                    const headers = json.resultSet.headers;
-                    const rows = json.resultSet.rowSet;
-                    
-                    // İndeksleri bul (Çünkü sıra değişebilir)
-                    const iRank = headers.indexOf('RANK');
-                    const iName = headers.indexOf('PLAYER_NAME');
-                    const iTeam = headers.indexOf('TEAM_ABBREVIATION');
-                    const iVal = headers.indexOf(statCategory); // PTS, AST veya REB
-                    const iId = headers.indexOf('PLAYER_ID');
-
-                    // İlk 5 oyuncuyu al ve map et
-                    return rows.slice(0, 5).map(row => ({
-                        r: row[iRank],
-                        n: row[iName],
-                        t: row[iTeam],
-                        v: row[iVal],
-                        i: row[iId]
-                    }));
+                     const headers = json.resultSet.headers;
+                     const rows = json.resultSet.rowSet;
+                     const iRank = headers.indexOf('RANK');
+                     const iName = headers.indexOf('PLAYER_NAME');
+                     const iTeam = headers.indexOf('TEAM_ABBREVIATION');
+                     const iVal = headers.indexOf(statCategory);
+                     const iId = headers.indexOf('PLAYER_ID');
+                     return rows.slice(0, 5).map(row => ({ r: row[iRank], n: row[iName], t: row[iTeam], v: row[iVal], i: row[iId] }));
                 }
 
-                // 2. MAÇLARI İŞLE
                 if (endpoint === 'scoreboard') {
-                    // Eğer maç yoksa boş dizi döndür
                     if(!json.scoreboard || !json.scoreboard.games) return [];
-
-                    return json.scoreboard.games.map(game => {
-                        return {
-                            id: game.gameId,
-                            home: game.homeTeam.teamTricode,
-                            away: game.awayTeam.teamTricode,
-                            status: game.gameStatusText, // Örn: "Final" veya "7:00 pm ET"
-                            // Canlı veri olmadığı için oranları rastgele/simüle üretiyoruz (Gerçek bahis API'si paralı olduğu için)
-                            hS: Math.floor(Math.random() * 20) + 40, // Güç simülasyonu
-                            aS: Math.floor(Math.random() * 20) + 40
-                        };
-                    });
+                    return json.scoreboard.games.map(game => ({
+                        id: game.gameId, home: game.homeTeam.teamTricode, away: game.awayTeam.teamTricode,
+                        status: game.gameStatusText, hS: 50, aS: 50
+                    }));
                 }
                 
                 return [];
 
             } catch (error) {
-                console.error("API Hatası:", error);
-                return []; // Hata olursa boş döndür ki site çökmesin
+                console.warn("API Hatası alındı, yedek veriler yükleniyor...", error);
+                // 2. Hata durumunda YEDEK veriyi döndür
+                if (endpoint === 'stats') return FALLBACK_DATA.stats[statCategory] || [];
+                if (endpoint === 'scoreboard') return FALLBACK_DATA.games;
+                if (endpoint === 'injuries') return FALLBACK_DATA.injuries;
+                return [];
             }
         }
 
-        // --- 3. UYGULAMA MANTIĞI ---
+        // --- 3. UYGULAMA BAŞLATMA ---
         document.addEventListener('DOMContentLoaded', () => {
             initApp();
             
-            // Güvenlik kilidi: Giriş animasyonu takılırsa 3 sn sonra zorla kapat
+            // Giriş animasyonu takılırsa 2.5 saniye sonra kapat
             setTimeout(() => {
                 const overlay = document.getElementById('intro-overlay');
                 if(overlay && overlay.style.opacity !== '0') {
                     overlay.style.opacity = '0';
                     setTimeout(() => { overlay.style.display = 'none'; }, 500);
                 }
-            }, 3000);
+            }, 2500);
         });
 
         async function initApp() {
             await renderAll();
-            await loadStats('PTS'); // İlk açılışta sayı krallığı
+            await loadStats('PTS');
             
-            // Veriler geldi, animasyonu kapat
+            // Animasyonu kapat
             const overlay = document.getElementById('intro-overlay');
-            overlay.style.opacity = '0';
-            setTimeout(() => { overlay.style.display = 'none'; }, 500);
+            if(overlay) {
+                overlay.style.opacity = '0';
+                setTimeout(() => { overlay.style.display = 'none'; }, 500);
+            }
         }
 
         function nav(sectionId) {
@@ -335,7 +319,6 @@
         function toggleLang() {
             currentLang = currentLang === 'tr' ? 'en' : 'tr';
             renderAll();
-            // Aktif olan istatistik butonunu bul ve yenile
             const activeBtn = document.querySelector('.filter-btn.active');
             const cat = activeBtn ? activeBtn.getAttribute('onclick').match(/'([^']+)'/)[1] : 'PTS';
             loadStats(cat);
@@ -344,7 +327,7 @@
         async function renderAll() {
             const data = contentDB[currentLang];
             
-            // Text güncellemeleri
+            // Metinler
             Object.keys(data.nav).forEach(k => document.getElementById('btn-'+k).innerText = data.nav[k]);
             Object.keys(data.titles).forEach(k => document.getElementById('title-'+k).innerText = data.titles[k]);
 
@@ -353,23 +336,20 @@
                 `<div class="news-card"><h3 style="margin-top:0">${n.title}</h3><p style="color:#ccc;margin:0">${n.desc}</p></div>`
             ).join('');
 
-            // Maçları Çek (Scoreboard)
+            // Maçlar
             const games = await fetchNBAData('scoreboard');
             const gCon = document.getElementById('games-container');
             gCon.innerHTML = '';
 
             if (games.length === 0) {
-                gCon.innerHTML = `<div style="text-align:center; padding:20px; color:#666;">${currentLang === 'tr' ? 'Bugün maç bulunmuyor.' : 'No games scheduled for today.'}</div>`;
+                gCon.innerHTML = `<div style="text-align:center; padding:20px; color:#666;">No games found.</div>`;
             } else {
                 games.forEach(g => {
-                    // Takım verisi yoksa (örn: All-Star takımı) varsayılan gri kullan
                     const hT = teamsDB[g.home] || { name: g.home, color: '#333', id: '0' };
                     const aT = teamsDB[g.away] || { name: g.away, color: '#333', id: '0' };
                     
-                    // Tahmin Algoritması (Simüle)
                     const hProb = Math.round(((g.hS + 5) / (g.hS + 5 + g.aS)) * 100); 
                     const pred = hProb > 50 ? `${hT.name} %${hProb}` : `${aT.name} %${100-hProb}`;
-                    
                     const logo = id => id !== '0' ? `https://cdn.nba.com/logos/nba/${id}/primary/L/logo.svg` : 'https://via.placeholder.com/50';
 
                     gCon.innerHTML += `
@@ -386,21 +366,31 @@
                         </div>`;
                 });
             }
+
+            // Sakatlıklar (Injuries)
+            const injuries = await fetchNBAData('injuries');
+            const injBody = document.getElementById('injuries-body');
+            injBody.innerHTML = '';
+            injuries.forEach(inj => {
+                const badgeClass = inj.code === 'out' ? 'status-out blink' : 'status-dtd';
+                injBody.innerHTML += `
+                    <tr>
+                        <td><div style="font-weight:bold;">${inj.name}</div><div style="font-size:0.8rem;color:#888">${inj.team}</div></td>
+                        <td><span class="status-badge ${badgeClass}">${inj.status}</span><div class="injury-desc">${inj.type}</div></td>
+                        <td style="color:#ddd">${inj.return}</td>
+                    </tr>`;
+            });
         }
 
         async function loadStats(cat) {
-            // Butonların aktifliğini değiştir
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            // Tıklanan butonu bulmak için category kontrolü
-            const buttons = document.querySelectorAll('.filter-btn');
-            buttons.forEach(btn => {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
                 if(btn.getAttribute('onclick').includes(cat)) btn.classList.add('active');
             });
 
             const tbody = document.getElementById('stats-body');
             tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading...</td></tr>';
 
-            // Veriyi çek (Category parametresini yolla: PTS, AST, REB)
             const stats = await fetchNBAData('stats', cat);
             
             tbody.innerHTML = '';
@@ -417,5 +407,4 @@
         }
     </script>
 </body>
-
 </html>
