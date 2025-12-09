@@ -5,70 +5,164 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NBA Pro Analytics</title>
     <style>
-        /* --- TASARIM (CSS) --- */
+        /* --- GENEL TASARIM (CSS) --- */
         :root {
             --bg-color: #121212;
             --card-bg: #1e1e1e;
-            --table-hover: #2c2c2c;
             --text-color: #e0e0e0;
-            --accent-color: #C9082A;
-            --secondary-color: #17408B;
+            --accent-color: #C9082A; /* NBA Kırmızısı */
+            --secondary-color: #17408B; /* NBA Mavisi */
             --gold: #FDB927;
         }
 
         body { margin: 0; font-family: 'Segoe UI', Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-color); overflow-x: hidden; }
 
         /* HEADER */
-        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; background-color: var(--card-bg); border-bottom: 2px solid var(--accent-color); position: sticky; top: 0; z-index: 100; }
-        .header-logo { font-weight: 800; font-size: 1.2rem; color: #fff; letter-spacing: 1px; }
-        nav button { background: none; border: none; color: #aaa; margin: 0 10px; font-size: 0.9rem; cursor: pointer; text-transform: uppercase; font-weight: 600; padding: 5px 0; transition: all 0.3s; }
-        nav button:hover, nav button.active { color: #fff; border-bottom: 2px solid var(--accent-color); }
-        .lang-btn { background-color: #333; color: white; border: 1px solid #555; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; background-color: var(--card-bg); border-bottom: 3px solid var(--accent-color); position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        .header-logo { font-weight: 900; font-size: 1.4rem; color: #fff; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; }
+        .header-logo span { color: var(--accent-color); }
+        
+        nav button { background: none; border: none; color: #aaa; margin: 0 8px; font-size: 0.95rem; cursor: pointer; text-transform: uppercase; font-weight: 700; padding: 8px 12px; transition: all 0.3s; border-radius: 4px; }
+        nav button:hover, nav button.active { color: #fff; background-color: rgba(255,255,255,0.1); }
+        nav button.active { border-bottom: 3px solid var(--accent-color); border-radius: 4px 4px 0 0; background: none; }
+        
+        .lang-btn { background-color: #333; color: white; border: 1px solid #555; padding: 5px 12px; border-radius: 20px; cursor: pointer; font-size: 0.8rem; font-weight: bold; transition: 0.3s; }
+        .lang-btn:hover { background-color: var(--secondary-color); border-color: var(--secondary-color); }
 
-        /* İÇERİK */
-        main { padding: 20px; max-width: 1200px; margin: 0 auto; min-height: 80vh; }
-        .section-content { display: none; animation: fadeIn 0.4s ease-in; }
+        /* İÇERİK ALANI */
+        main { padding: 0; max-width: 1200px; margin: 0 auto; min-height: 80vh; padding-bottom: 50px; }
+        .section-content { display: none; animation: fadeIn 0.5s ease-out; padding: 20px; }
         .section-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        h2 { border-left: 5px solid var(--accent-color); padding-left: 15px; margin-bottom: 20px; font-size: 1.5rem; }
 
-        /* KARTLAR & GRID */
+        /* --- ANA SAYFA (HOME) ÖZEL TASARIMI --- */
+        
+        /* 1. HERO SECTION (MANŞET) */
+        .hero-section {
+            position: relative;
+            width: 100%;
+            height: 450px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: flex-end;
+        }
+        
+        /* Karartma Efekti */
+        .hero-overlay {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0) 100%);
+            position: absolute;
+            top: 0; left: 0;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            padding: 30px;
+            max-width: 700px;
+        }
+
+        .hero-tag {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 5px 12px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+
+        .hero-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 0 0 10px 0;
+            line-height: 1.1;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .hero-desc {
+            font-size: 1.1rem;
+            color: #ddd;
+            margin: 0;
+            line-height: 1.5;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        /* 2. NEWS GRID (HABER KARTLARI) */
+        .section-header { font-size: 1.5rem; border-left: 5px solid var(--accent-color); padding-left: 15px; margin-bottom: 20px; font-weight: bold; }
+        
+        .news-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .news-card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            border: 1px solid #333;
+        }
+
+        .news-card:hover { transform: translateY(-5px); box-shadow: 0 5px 20px rgba(0,0,0,0.6); border-color: var(--secondary-color); }
+
+        .news-img-wrapper {
+            width: 100%;
+            height: 180px;
+            overflow: hidden;
+        }
+
+        .news-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+
+        .news-card:hover .news-img { transform: scale(1.05); }
+
+        .news-body { padding: 20px; }
+        .news-title { font-size: 1.2rem; font-weight: bold; margin: 0 0 10px 0; color: #fff; }
+        .news-excerpt { font-size: 0.9rem; color: #aaa; line-height: 1.4; }
+        .news-meta { margin-top: 15px; font-size: 0.8rem; color: #666; display: flex; justify-content: space-between; }
+
+        /* --- DİĞER SAYFALAR (Games, Stats vb.) --- */
         .games-grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); }
-        .game-card { background-color: var(--card-bg); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.4); border: 1px solid #333; }
+        .game-card { background-color: var(--card-bg); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 1px solid #333; }
         
-        .matchup-row { display: flex; height: 120px; position: relative; }
-        .team-block { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; color: white; z-index: 1; }
-        .team-block::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: -1; }
-        .team-logo { width: 60px; height: 60px; margin-bottom: 8px; background: #fff; border-radius: 50%; padding: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.5); object-fit: contain; }
+        .matchup-row { display: flex; height: 110px; position: relative; align-items: center; }
+        .team-block { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1; }
+        .team-logo { width: 65px; height: 65px; margin-bottom: 5px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
         
-        .vs-block { width: 50px; display: flex; justify-content: center; align-items: center; font-weight: 900; font-style: italic; font-size: 1.5rem; z-index: 2; background: #000; clip-path: polygon(20% 0%, 100% 0, 80% 100%, 0% 100%); }
+        .vs-block { width: 40px; height: 100%; display: flex; justify-content: center; align-items: center; font-weight: 900; font-style: italic; font-size: 1.2rem; background: #000; color: #333; }
 
-        .odds-row { padding: 15px; display: flex; justify-content: space-between; align-items: center; background-color: #252525; font-size: 0.9rem; border-top: 1px solid #333; }
-        .prediction-badge { background-color: var(--secondary-color); color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; gap: 5px; }
+        .odds-row { padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; background-color: #252525; border-top: 1px solid #333; }
+        .prediction-badge { background: linear-gradient(45deg, var(--secondary-color), #2980b9); color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; }
 
-        /* TABLOLAR */
-        .table-container { background-color: var(--card-bg); border-radius: 8px; overflow: hidden; margin-top: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        /* Tablolar */
+        .table-container { background-color: var(--card-bg); border-radius: 8px; overflow: hidden; margin-top: 15px; }
         table { width: 100%; border-collapse: collapse; }
-        th { background-color: #2b2b2b; color: #aaa; font-weight: 600; text-align: left; padding: 15px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
-        td { padding: 15px; border-bottom: 1px solid #333; vertical-align: middle; font-size: 1rem; }
-        tr:last-child td { border-bottom: none; }
-        tr:hover { background-color: var(--table-hover); }
-
+        th { background-color: #2b2b2b; color: #aaa; font-weight: 600; text-align: left; padding: 15px; font-size: 0.85rem; text-transform: uppercase; }
+        td { padding: 15px; border-bottom: 1px solid #333; vertical-align: middle; }
         .player-cell { display: flex; align-items: center; gap: 15px; }
         .player-headshot { width: 45px; height: 45px; border-radius: 50%; background-color: #333; object-fit: cover; border: 2px solid var(--accent-color); }
         .stat-value { font-size: 1.2rem; font-weight: bold; color: var(--gold); }
         
-        .filter-btn { background: #333; border: none; color: white; padding: 8px 20px; border-radius: 20px; cursor: pointer; margin-right: 10px; transition: 0.3s; font-weight: 600; }
-        .filter-btn:hover, .filter-btn.active { background: var(--secondary-color); transform: translateY(-2px); }
+        .filter-btn { background: #333; border: none; color: white; padding: 8px 20px; border-radius: 20px; cursor: pointer; margin-right: 10px; font-weight: 600; }
+        .filter-btn.active { background: var(--secondary-color); }
 
-        /* HABERLER */
-        .news-card { background: var(--card-bg); margin-bottom: 15px; padding: 25px; border-radius: 8px; border-left: 5px solid var(--secondary-color); }
-        .news-card h3 { margin-top: 0; color: #fff; }
-        
-        /* DURUM ETİKETLERİ */
         .status-badge { padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 0.8rem; }
         .status-live { background-color: #d32f2f; color: white; animation: blink 2s infinite; }
-        .status-final { background-color: #333; color: #aaa; }
         @keyframes blink { 50% { opacity: 0.7; } }
 
     </style>
@@ -76,11 +170,11 @@
 <body>
 
     <header>
-        <div class="header-logo">NBA ANALYTICS</div>
+        <div class="header-logo">NBA <span>ANALYTICS</span></div>
         <nav>
             <button onclick="nav('home')" class="nav-btn active" id="btn-home">Home</button>
             <button onclick="nav('games')" class="nav-btn" id="btn-games">Games</button>
-            <button onclick="nav('stats')" class="nav-btn" id="btn-stats">Statistics</button>
+            <button onclick="nav('stats')" class="nav-btn" id="btn-stats">Stats</button>
             <button onclick="nav('injuries')" class="nav-btn" id="btn-injuries">Injuries</button>
             <button onclick="nav('lineups')" class="nav-btn" id="btn-lineups">Lineups</button>
         </nav>
@@ -89,20 +183,19 @@
 
     <main>
         <section id="home" class="section-content active">
-            <h2 id="title-news">Latest News</h2>
-            <div id="news-container"></div>
+            <div id="home-content"></div>
         </section>
 
         <section id="games" class="section-content">
-            <h2 id="title-games">Games & Odds</h2>
+            <div class="section-header" id="title-games">Games & Odds</div>
             <div id="games-container" class="games-grid">
                 <div style="text-align:center; padding:50px; color:#666;">Loading games...</div>
             </div>
         </section>
 
         <section id="stats" class="section-content">
-            <h2 id="title-stats">Statistics</h2>
-            <div class="stat-filter-btns">
+            <div class="section-header" id="title-stats">Statistics</div>
+            <div style="margin-bottom:20px;">
                 <button class="filter-btn active" onclick="loadStats('PTS')">Points</button>
                 <button class="filter-btn" onclick="loadStats('AST')">Assists</button>
                 <button class="filter-btn" onclick="loadStats('REB')">Rebounds</button>
@@ -116,7 +209,7 @@
         </section>
 
         <section id="injuries" class="section-content">
-            <h2 id="title-injuries">Injuries</h2>
+            <div class="section-header" id="title-injuries">Injury Report</div>
             <div class="table-container">
                 <table>
                     <thead><tr><th width="40%">Player</th><th width="30%">Status</th><th width="30%">Info</th></tr></thead>
@@ -126,149 +219,149 @@
         </section>
         
         <section id="lineups" class="section-content">
-            <h2 id="title-lineups">Lineups</h2>
+            <div class="section-header" id="title-lineups">Starting Lineups</div>
             <p style="padding: 20px; color:#666;">Coming Soon...</p>
         </section>
     </main>
 
     <script>
-        // --- 1. TAKIM VERİTABANI (EKSİKSİZ LİSTE) ---
-        // Logolar ve Renkler için Kritik
+        // --- 1. VERİ KAYNAKLARI ---
+        
+        // HABER VERİTABANI (YENİ VE DETAYLI)
+        // Görseller NBA CDN veya güvenilir placeholder kaynaklarıdır.
+        const newsData = {
+            en: {
+                hero: {
+                    title: "LeBron James Makes History Again",
+                    desc: "The King becomes the first player in NBA history to reach 40,000 points, creating another unforgettable moment.",
+                    tag: "BREAKING NEWS",
+                    img: "https://image.cnbcfm.com/api/v1/image/107380386-17094356612024-03-02t015545z_1499573070_rc2h56a0q6o4_rtrmadp_3_nba-denver-nuggets-at-los-angeles-lakers.jpeg?v=1709435766&w=1920&h=1080"
+                },
+                grid: [
+                    { title: "Wembanyama's Rookie Dominance", desc: "Spurs rookie continues to shock the world with stats never seen before.", img: "https://cdn.nba.com/manage/2023/10/victor-wembanyama-iso-cropped.jpg", time: "2 hours ago" },
+                    { title: "Playoff Picture: East vs West", desc: "With only 20 games left, the seeding battles are heating up.", img: "https://cdn.nba.com/manage/2023/04/NBA-Playoff-Picture-2023.jpg", time: "4 hours ago" },
+                    { title: "Curry's Shooting Slump Ends", desc: "Golden State's star hits 10 threes in a blowout win.", img: "https://cdn.nba.com/manage/2021/04/stephen-curry-iso-cropped.jpg", time: "6 hours ago" }
+                ]
+            },
+            tr: {
+                hero: {
+                    title: "LeBron James Yine Tarih Yazdı",
+                    desc: "Kral, NBA tarihinde 40.000 sayı barajına ulaşan ilk oyuncu olarak unutulmaz bir ana daha imza attı.",
+                    tag: "SON DAKİKA",
+                    img: "https://image.cnbcfm.com/api/v1/image/107380386-17094356612024-03-02t015545z_1499573070_rc2h56a0q6o4_rtrmadp_3_nba-denver-nuggets-at-los-angeles-lakers.jpeg?v=1709435766&w=1920&h=1080"
+                },
+                grid: [
+                    { title: "Wembanyama'nın Çaylak Dominasyonu", desc: "Spurs'ün çaylağı, daha önce görülmemiş istatistiklerle dünyayı şok etmeye devam ediyor.", img: "https://cdn.nba.com/manage/2023/10/victor-wembanyama-iso-cropped.jpg", time: "2 saat önce" },
+                    { title: "Playoff Resmi: Doğu ve Batı", desc: "Sadece 20 maç kala, sıralama savaşları iyice kızışıyor.", img: "https://cdn.nba.com/manage/2023/04/NBA-Playoff-Picture-2023.jpg", time: "4 saat önce" },
+                    { title: "Curry'nin Şut Krizi Bitti", desc: "Golden State'in yıldızı farklı galibiyette 10 üçlük isabeti buldu.", img: "https://cdn.nba.com/manage/2021/04/stephen-curry-iso-cropped.jpg", time: "6 saat önce" }
+                ]
+            }
+        };
+
         const teamsDB = {
-            'ATL': { name: 'Hawks', color: '#E03A3E', id: '1610612737' },
-            'BOS': { name: 'Celtics', color: '#007A33', id: '1610612738' },
-            'BKN': { name: 'Nets', color: '#000000', id: '1610612751' },
-            'CHA': { name: 'Hornets', color: '#1D1160', id: '1610612766' },
-            'CHI': { name: 'Bulls', color: '#CE1141', id: '1610612741' },
-            'CLE': { name: 'Cavaliers', color: '#860038', id: '1610612739' },
-            'DAL': { name: 'Mavericks', color: '#00538C', id: '1610612742' },
-            'DEN': { name: 'Nuggets', color: '#0E2240', id: '1610612743' },
-            'DET': { name: 'Pistons', color: '#C8102E', id: '1610612765' },
-            'GSW': { name: 'Warriors', color: '#1D428A', id: '1610612744' },
-            'HOU': { name: 'Rockets', color: '#CE1141', id: '1610612745' },
-            'IND': { name: 'Pacers', color: '#002D62', id: '1610612754' },
-            'LAC': { name: 'Clippers', color: '#C8102E', id: '1610612746' },
-            'LAL': { name: 'Lakers', color: '#552583', id: '1610612747' },
-            'MEM': { name: 'Grizzlies', color: '#5D76A9', id: '1610612763' },
-            'MIA': { name: 'Heat', color: '#98002E', id: '1610612748' },
-            'MIL': { name: 'Bucks', color: '#00471B', id: '1610612749' },
-            'MIN': { name: 'Timberwolves', color: '#0C2340', id: '1610612750' },
-            'NOP': { name: 'Pelicans', color: '#0C2340', id: '1610612740' },
-            'NYK': { name: 'Knicks', color: '#F58426', id: '1610612752' },
-            'OKC': { name: 'Thunder', color: '#007AC1', id: '1610612760' },
-            'ORL': { name: 'Magic', color: '#0077C0', id: '1610612753' },
-            'PHI': { name: '76ers', color: '#006BB6', id: '1610612755' },
-            'PHX': { name: 'Suns', color: '#1D1160', id: '1610612756' },
-            'POR': { name: 'Blazers', color: '#E03A3E', id: '1610612757' },
-            'SAC': { name: 'Kings', color: '#5A2D81', id: '1610612758' },
-            'SAS': { name: 'Spurs', color: '#C4CED4', id: '1610612759' },
-            'TOR': { name: 'Raptors', color: '#CE1141', id: '1610612761' },
-            'UTA': { name: 'Jazz', color: '#002B5C', id: '1610612762' },
-            'WAS': { name: 'Wizards', color: '#002B5C', id: '1610612764' }
+            // ESPN Logoları daha stabil ve arka planı temizdir
+            'ATL': { name: 'Hawks', color: '#E03A3E' },
+            'BOS': { name: 'Celtics', color: '#007A33' },
+            'BKN': { name: 'Nets', color: '#000000' },
+            'CHA': { name: 'Hornets', color: '#1D1160' },
+            'CHI': { name: 'Bulls', color: '#CE1141' },
+            'CLE': { name: 'Cavaliers', color: '#860038' },
+            'DAL': { name: 'Mavericks', color: '#00538C' },
+            'DEN': { name: 'Nuggets', color: '#0E2240' },
+            'DET': { name: 'Pistons', color: '#C8102E' },
+            'GSW': { name: 'Warriors', color: '#1D428A' },
+            'HOU': { name: 'Rockets', color: '#CE1141' },
+            'IND': { name: 'Pacers', color: '#002D62' },
+            'LAC': { name: 'Clippers', color: '#C8102E' },
+            'LAL': { name: 'Lakers', color: '#552583' },
+            'MEM': { name: 'Grizzlies', color: '#5D76A9' },
+            'MIA': { name: 'Heat', color: '#98002E' },
+            'MIL': { name: 'Bucks', color: '#00471B' },
+            'MIN': { name: 'Timberwolves', color: '#0C2340' },
+            'NOP': { name: 'Pelicans', color: '#0C2340' },
+            'NYK': { name: 'Knicks', color: '#F58426' },
+            'OKC': { name: 'Thunder', color: '#007AC1' },
+            'ORL': { name: 'Magic', color: '#0077C0' },
+            'PHI': { name: '76ers', color: '#006BB6' },
+            'PHX': { name: 'Suns', color: '#1D1160' },
+            'POR': { name: 'Blazers', color: '#E03A3E' },
+            'SAC': { name: 'Kings', color: '#5A2D81' },
+            'SAS': { name: 'Spurs', color: '#C4CED4' },
+            'TOR': { name: 'Raptors', color: '#CE1141' },
+            'UTA': { name: 'Jazz', color: '#002B5C' },
+            'WAS': { name: 'Wizards', color: '#002B5C' }
         };
 
         const contentDB = {
             en: {
-                nav: { home: "Home", games: "Games", stats: "Statistics", injuries: "Injuries", lineups: "Lineups" },
-                titles: { news: "Latest News", games: "Games & Odds", stats: "Statistics Leaders", injuries: "Injury Report", lineups: "Starting Lineups" },
-                news: [
-                    { title: "Season Updates", desc: "Real-time scores and stats from the 2024-2025 season are live." },
-                    { title: "Playoff Picture", desc: "Teams are battling for seeding as the post-season approaches." }
-                ],
-                labels: { prediction: "Prediction", win: "Win" }
+                nav: { home: "Home", games: "Games", stats: "Stats", injuries: "Injuries", lineups: "Lineups" },
+                titles: { games: "Games & Odds", stats: "Statistics", injuries: "Injury Report", lineups: "Starting Lineups" },
+                labels: { prediction: "Prediction" }
             },
             tr: {
                 nav: { home: "Ana Sayfa", games: "Maçlar", stats: "İstatistikler", injuries: "Sakatlıklar", lineups: "Kadrolar" },
-                titles: { news: "Son Haberler", games: "Maçlar & Beklentiler", stats: "İstatistik Liderleri", injuries: "Sakatlık Raporu", lineups: "İlk 5'ler" },
-                news: [
-                    { title: "Sezon Güncellemeleri", desc: "2024-2025 sezonu canlı skorları ve verileri anlık olarak sitede." },
-                    { title: "Playoff Resmi", desc: "Sezon sonu yaklaşırken takımlar sıralama için savaşıyor." }
-                ],
-                labels: { prediction: "Tahmin", win: "Kazanır" }
+                titles: { games: "Maçlar & Beklentiler", stats: "İstatistikler", injuries: "Sakatlık Raporu", lineups: "İlk 5'ler" },
+                labels: { prediction: "Tahmin" }
             }
         };
 
         let currentLang = 'tr';
 
-        // --- 2. API VERİ ÇEKME & İŞLEME (DÜZELTİLMİŞ KISIM) ---
+        // --- 2. API VE FONKSİYONLAR ---
         async function fetchNBAData(endpoint, statCategory = 'PTS') {
             try {
-                // Cache önlemek için timestamp ekliyoruz
                 const url = `/api/nba?type=${endpoint}&category=${statCategory}&t=${new Date().getTime()}`;
                 const response = await fetch(url);
-                
-                if (!response.ok) throw new Error("API Bağlantı Hatası");
+                if (!response.ok) throw new Error("API Hatası");
                 const json = await response.json();
                 
-                // --- İSTATİSTİK PARSING (UNDEFINED SORUNU ÇÖZÜMÜ) ---
                 if (endpoint === 'stats') {
                     if(!json.resultSet || !json.resultSet.rowSet) return [];
-                    
                     const headers = json.resultSet.headers;
                     const rows = json.resultSet.rowSet;
-
-                    // Header İsimlerini Esnek Arayalım (NBA bazen değiştiriyor)
-                    // Hem 'PLAYER_NAME' hem 'PLAYER' ihtimallerini kontrol et
-                    let iName = headers.indexOf('PLAYER_NAME');
-                    if (iName === -1) iName = headers.indexOf('PLAYER'); // Yedek plan
                     
+                    let iName = headers.indexOf('PLAYER_NAME');
+                    if (iName === -1) iName = headers.indexOf('PLAYER');
                     let iTeam = headers.indexOf('TEAM_ABBREVIATION');
-                    if (iTeam === -1) iTeam = headers.indexOf('TEAM'); // Yedek plan
-
+                    if (iTeam === -1) iTeam = headers.indexOf('TEAM');
+                    
                     const iRank = headers.indexOf('RANK');
-                    const iVal = headers.indexOf(statCategory); 
+                    const iVal = headers.indexOf(statCategory);
                     const iId = headers.indexOf('PLAYER_ID');
 
-                    // Hala bulamazsa hata vermemesi için koruma
-                    if (iName === -1 || iTeam === -1) {
-                        console.error("Header Bulunamadı:", headers);
-                        return []; 
-                    }
-
                     return rows.slice(0, 5).map(row => ({
-                        r: row[iRank],
-                        n: row[iName],      // Artık doğru indexi kullanacak
-                        t: row[iTeam],      // Artık doğru indexi kullanacak
-                        v: row[iVal],
-                        i: row[iId]
+                        r: row[iRank], n: row[iName], t: row[iTeam], v: row[iVal], i: row[iId]
                     }));
                 }
 
-                // --- MAÇ PARSING ---
                 if (endpoint === 'scoreboard') {
                     if(!json.scoreboard || !json.scoreboard.games) return [];
                     return json.scoreboard.games.map(game => ({
                         id: game.gameId,
                         home: game.homeTeam.teamTricode,
                         away: game.awayTeam.teamTricode,
-                        status: game.gameStatusText, 
-                        // Simüle edilmiş güç dengeleri
-                        hS: 50 + (Math.random() * 10), 
-                        aS: 50 + (Math.random() * 10)
+                        status: game.gameStatusText,
+                        hS: 50 + (Math.random() * 10), aS: 50 + (Math.random() * 10) // Simülasyon
                     }));
                 }
                 
-                // --- INJURIES (Yedek) ---
-                if (endpoint === 'injuries') {
-                    // API'den gelen statik listeyi kullan
-                    return json; 
-                }
+                if (endpoint === 'injuries') return json;
 
                 return [];
-
             } catch (error) {
                 console.error("Veri Hatası:", error);
                 return [];
             }
         }
 
-        // --- 3. UI RENDERING ---
+        // --- 3. RENDER MANTIĞI ---
         document.addEventListener('DOMContentLoaded', () => {
             initApp();
         });
 
         async function initApp() {
-            await renderAll();
+            renderHome();
+            await renderData();
             await loadStats('PTS');
         }
 
@@ -281,90 +374,118 @@
 
         function toggleLang() {
             currentLang = currentLang === 'tr' ? 'en' : 'tr';
-            renderAll();
+            renderHome();
+            renderData();
             const activeBtn = document.querySelector('.filter-btn.active');
             const cat = activeBtn ? activeBtn.getAttribute('onclick').match(/'([^']+)'/)[1] : 'PTS';
             loadStats(cat);
         }
 
-        async function renderAll() {
-            const data = contentDB[currentLang];
+        // --- YENİ HOME RENDER FONKSİYONU ---
+        function renderHome() {
+            const data = newsData[currentLang];
+            const homeContainer = document.getElementById('home-content');
             
-            // Metinler
-            Object.keys(data.nav).forEach(k => {
+            // Hero HTML
+            const heroHTML = `
+                <div class="hero-section" style="background-image: url('${data.hero.img}');">
+                    <div class="hero-overlay"></div>
+                    <div class="hero-content">
+                        <span class="hero-tag">${data.hero.tag}</span>
+                        <h1 class="hero-title">${data.hero.title}</h1>
+                        <p class="hero-desc">${data.hero.desc}</p>
+                    </div>
+                </div>
+            `;
+
+            // Grid HTML
+            let gridHTML = `<div class="section-header">${currentLang === 'tr' ? 'Gündem' : 'Trending Now'}</div><div class="news-grid">`;
+            data.grid.forEach(item => {
+                gridHTML += `
+                    <div class="news-card">
+                        <div class="news-img-wrapper">
+                            <img src="${item.img}" class="news-img">
+                        </div>
+                        <div class="news-body">
+                            <div class="news-title">${item.title}</div>
+                            <div class="news-excerpt">${item.desc}</div>
+                            <div class="news-meta">
+                                <span>NBA Insider</span>
+                                <span>${item.time}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            gridHTML += `</div>`;
+
+            homeContainer.innerHTML = heroHTML + gridHTML;
+            
+            // Diğer Textler
+            const txt = contentDB[currentLang];
+            Object.keys(txt.nav).forEach(k => {
                 const el = document.getElementById('btn-'+k);
-                if(el) el.innerText = data.nav[k];
+                if(el) el.innerText = txt.nav[k];
             });
-            Object.keys(data.titles).forEach(k => {
-                 const el = document.getElementById('title-'+k);
-                 if(el) el.innerText = data.titles[k];
+            Object.keys(txt.titles).forEach(k => {
+                const el = document.getElementById('title-'+k);
+                if(el) el.innerText = txt.titles[k];
             });
+        }
 
-            // Haberler
-            document.getElementById('news-container').innerHTML = data.news.map(n => 
-                `<div class="news-card"><h3>${n.title}</h3><p style="color:#ccc;margin:0">${n.desc}</p></div>`
-            ).join('');
-
-            // Maçlar
+        async function renderData() {
+            const txt = contentDB[currentLang];
             const games = await fetchNBAData('scoreboard');
             const gCon = document.getElementById('games-container');
             gCon.innerHTML = '';
 
             if (games.length === 0) {
-                gCon.innerHTML = `<div style="text-align:center; padding:50px; color:#aaa;">${currentLang==='tr'?'Şu an maç bulunmuyor.':'No games live right now.'}</div>`;
+                gCon.innerHTML = `<div style="text-align:center; padding:50px; color:#aaa;">No games.</div>`;
             } else {
                 games.forEach(g => {
-                    // Takım verisi yoksa fallback yap
-                    const hT = teamsDB[g.home] || { name: g.home, color: '#333', id: '0' };
-                    const aT = teamsDB[g.away] || { name: g.away, color: '#333', id: '0' };
+                    const hT = teamsDB[g.home] || { name: g.home, color: '#333' };
+                    const aT = teamsDB[g.away] || { name: g.away, color: '#333' };
                     
                     const hProb = Math.round(((g.hS) / (g.hS + g.aS)) * 100); 
                     const pred = hProb > 50 ? `${hT.name} %${hProb}` : `${aT.name} %${100-hProb}`;
                     
-                    // Logo ID kontrolü
-                    const logo = id => (id && id !== '0') ? `https://cdn.nba.com/logos/nba/${id}/primary/L/logo.svg` : 'https://via.placeholder.com/60?text=NBA';
+                    // ESPN LOGO URL YAPISI (Daha stabil)
+                    const getLogo = (tricode) => `https://a.espncdn.com/i/teamlogos/nba/500/${tricode.toLowerCase()}.png`;
 
-                    // Maç Durumu Stili
-                    let statusBadge = `<span class="status-badge status-final">${g.status}</span>`;
+                    let statusBadge = `<span class="status-badge" style="background:#333; color:#ccc">${g.status}</span>`;
                     if(g.status.includes('ET') || g.status.includes('pm')) statusBadge = `<span style="color:#aaa; font-size:0.8rem">${g.status}</span>`;
-                    if(g.status.includes('Q') || g.status.includes('Half')) statusBadge = `<span class="status-badge status-live">LIVE</span> <span style="margin-left:5px">${g.status}</span>`;
+                    if(g.status.includes('Q') || g.status.includes('Half')) statusBadge = `<span class="status-badge status-live">LIVE</span> ${g.status}`;
 
                     gCon.innerHTML += `
                         <div class="game-card">
                             <div class="matchup-row">
                                 <div class="team-block" style="background:${aT.color}">
-                                    <img src="${logo(aT.id)}" class="team-logo">
-                                    <div style="font-weight:bold; font-size:1.1rem; text-shadow:1px 1px 2px #000;">${aT.name}</div>
+                                    <img src="${getLogo(g.away)}" class="team-logo" onerror="this.src='https://via.placeholder.com/50'">
+                                    <div style="font-weight:bold; font-size:1.2rem; text-shadow:1px 1px 3px #000;">${g.away}</div>
                                 </div>
                                 <div class="vs-block">VS</div>
                                 <div class="team-block" style="background:${hT.color}">
-                                    <img src="${logo(hT.id)}" class="team-logo">
-                                    <div style="font-weight:bold; font-size:1.1rem; text-shadow:1px 1px 2px #000;">${hT.name}</div>
+                                    <img src="${getLogo(g.home)}" class="team-logo" onerror="this.src='https://via.placeholder.com/50'">
+                                    <div style="font-weight:bold; font-size:1.2rem; text-shadow:1px 1px 3px #000;">${g.home}</div>
                                 </div>
                             </div>
                             <div class="odds-row">
-                                <div class="prediction-badge">🔮 ${data.labels.prediction}: ${pred}</div>
+                                <div class="prediction-badge">🔮 ${txt.labels.prediction}: ${pred}</div>
                                 <div>${statusBadge}</div>
                             </div>
                         </div>`;
                 });
             }
 
-            // Sakatlıklar
             const injuries = await fetchNBAData('injuries');
             const injBody = document.getElementById('injuries-body');
             injBody.innerHTML = '';
             if(Array.isArray(injuries)) {
                 injuries.forEach(inj => {
                     const badgeColor = inj.status === 'Out' ? '#d32f2f' : '#fbc02d';
-                    const textColor = inj.status === 'Out' ? '#ffcdd2' : '#fff9c4';
-                    
                     injBody.innerHTML += `
                         <tr>
-                            <td>
-                                <div style="font-weight:bold; font-size:1rem;">${inj.name}</div>
-                                <div style="color:#888; font-size:0.8rem">${inj.team}</div>
-                            </td>
+                            <td><div style="font-weight:bold;">${inj.name}</div><div style="color:#888; font-size:0.8rem">${inj.team}</div></td>
                             <td><span style="background:${badgeColor}33; color:${badgeColor}; border:1px solid ${badgeColor}; padding:3px 8px; border-radius:4px; font-weight:bold; font-size:0.8rem">${inj.status}</span></td>
                             <td style="color:#ccc; font-size:0.9rem">${inj.return} (${inj.type})</td>
                         </tr>`;
@@ -378,28 +499,18 @@
             btns.forEach(b => { if(b.getAttribute('onclick').includes(cat)) b.classList.add('active'); });
 
             const tbody = document.getElementById('stats-body');
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:#666;">Loading Data...</td></tr>';
-
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:#666;">Loading...</td></tr>';
             const stats = await fetchNBAData('stats', cat);
             tbody.innerHTML = '';
+            if(stats.length===0) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No Data</td></tr>'; return; }
             
-            if(stats.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">No data available.</td></tr>';
-                return;
-            }
-
             stats.forEach(p => {
-                const teamObj = teamsDB[p.t] || { name: p.t };
+                const tInfo = teamsDB[p.t] || { name: p.t };
                 tbody.innerHTML += `
                     <tr>
                         <td style="color:#666; font-weight:bold; font-size:1.1rem;">${p.r}</td>
-                        <td>
-                            <div class="player-cell">
-                                <img src="https://cdn.nba.com/headshots/nba/latest/260x190/${p.i}.png" class="player-headshot" onerror="this.src='https://via.placeholder.com/45'">
-                                <span style="font-weight:600; font-size:1rem;">${p.n}</span>
-                            </div>
-                        </td>
-                        <td style="color:#aaa">${teamObj.name}</td>
+                        <td><div class="player-cell"><img src="https://cdn.nba.com/headshots/nba/latest/260x190/${p.i}.png" class="player-headshot" onerror="this.src='https://via.placeholder.com/45'"><span>${p.n}</span></div></td>
+                        <td style="color:#aaa">${tInfo.name}</td>
                         <td class="stat-value">${p.v}</td>
                     </tr>`;
             });
