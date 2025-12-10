@@ -15,8 +15,10 @@ module.exports = async (req, res) => {
     try {
         let apiUrl = '';
 
-        // 1. MAÇLAR (ESPN SCOREBOARD)
+        // 1. MAÇLAR (SCOREBOARD) -> SADECE ESPN (ID Tutarlılığı İçin)
         if (type === 'scoreboard') {
+            // Tarih seçimi varsa ona göre, yoksa bugünün maçı
+            // ESPN Formatı: YYYYMMDD
             let dateParam = '';
             if (date) {
                 const d = new Date(date);
@@ -28,35 +30,29 @@ module.exports = async (req, res) => {
             apiUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard${dateParam}`;
         }
         
-        // 2. BOX SCORE (ESPN SUMMARY)
+        // 2. BOX SCORE -> SADECE ESPN (Scoreboard'dan gelen ID ile çalışır)
         else if (type === 'boxscore') {
             apiUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=${gameId}`;
         }
         
-        // 3. İSTATİSTİKLER (NBA HOMEPAGE DATA - DAHA STABİL)
+        // 3. İSTATİSTİKLER -> NBA CDN (Asla Engellenmez)
         else if (type === 'stats') {
-            // ESPN Web API yerine NBA'in statik JSON dosyasını kullanıyoruz (Bot koruması düşüktür)
-            apiUrl = 'https://stats.nba.com/js/data/widgets/home_season_leaders.json';
+            // Tüm oyuncuların güncel istatistiklerini tutan statik dosya
+            apiUrl = 'https://cdn.nba.com/static/json/liveData/playerstats/allplayers.json';
         }
         
-        // 4. HABERLER (ESPN)
+        // 4. HABERLER -> ESPN
         else if (type === 'news') {
             apiUrl = 'http://site.api.espn.com/apis/site/v2/sports/basketball/nba/news';
         }
 
         if (!apiUrl) return res.status(400).json({ error: 'Gecersiz istek' });
 
-        // NBA endpointleri için özel header
-        const headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Referer': 'https://www.nba.com/'
-        };
-
-        const response = await axios.get(apiUrl, { headers });
+        const response = await axios.get(apiUrl);
         res.status(200).json(response.data);
 
     } catch (error) {
-        console.error("API Hatası:", error.message);
-        res.status(500).json({ error: 'API Error', details: error.message });
+        console.error("API Error:", error.message);
+        res.status(500).json({ error: 'Veri alinamadi', details: error.message });
     }
 };
