@@ -1,7 +1,7 @@
 const axios = require('axios');
 
 module.exports = async (req, res) => {
-    const { type, date, gameId, category } = req.query;
+    const { type, date, gameId } = req.query;
 
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -27,12 +27,12 @@ module.exports = async (req, res) => {
             apiUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard${dateParam}`;
         }
         else if (type === 'boxscore') {
-            // ESPN Summary endpointi en detaylısıdır
+            // ESPN Summary (En kapsamlı veri)
             apiUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=${gameId}`;
         }
         else if (type === 'stats') {
-            // Sezonluk Liderler (Daha basit bir yapı kullanacağız)
-            apiUrl = 'https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/athletes?region=us&lang=en&contentorigin=espn&isqualified=true&page=1&limit=20&sort=offensive.avgPoints%3Adesc';
+            // Sezonluk Liderler
+            apiUrl = 'https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/athletes?region=us&lang=en&contentorigin=espn&isqualified=true&page=1&limit=10&sort=offensive.avgPoints%3Adesc';
         }
         else if (type === 'news') {
             apiUrl = 'http://site.api.espn.com/apis/site/v2/sports/basketball/nba/news';
@@ -44,6 +44,6 @@ module.exports = async (req, res) => {
         res.status(200).json(response.data);
 
     } catch (error) {
-        res.status(500).json({ error: 'API Error', details: error.message });
+        res.status(500).json({ error: 'API Hatasi', details: error.message });
     }
 };
