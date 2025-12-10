@@ -1,9 +1,8 @@
 const axios = require('axios');
 
 module.exports = async (req, res) => {
-    const { type, date, gameId, category } = req.query;
+    const { type, date, gameId } = req.query;
 
-    // CORS İzinleri
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -16,10 +15,9 @@ module.exports = async (req, res) => {
     try {
         let apiUrl = '';
 
-        // 1. MAÇLAR (SCOREBOARD)
+        // 1. MAÇLAR (ESPN SCOREBOARD)
         if (type === 'scoreboard') {
             let dateParam = '';
-            // Tarih seçilmişse
             if (date) {
                 const d = new Date(date);
                 const yyyy = d.getFullYear();
@@ -30,31 +28,35 @@ module.exports = async (req, res) => {
             apiUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard${dateParam}`;
         }
         
-        // 2. MAÇ DETAYI (BOX SCORE - SUMMARY ENDPOINT)
+        // 2. BOX SCORE (ESPN SUMMARY)
         else if (type === 'boxscore') {
-            // Bu endpoint hem skorları, hem play-by-play hem de boxscore'u verir.
             apiUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=${gameId}`;
         }
         
-        // 3. İSTATİSTİKLER (STATS LEADERS)
+        // 3. İSTATİSTİKLER (NBA HOMEPAGE DATA - DAHA STABİL)
         else if (type === 'stats') {
-            // ESPN Web API - Sezonluk Liderler
-            apiUrl = 'https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/athletes?region=us&lang=en&contentorigin=espn&isqualified=true&page=1&limit=10&sort=offensive.avgPoints%3Adesc';
+            // ESPN Web API yerine NBA'in statik JSON dosyasını kullanıyoruz (Bot koruması düşüktür)
+            apiUrl = 'https://stats.nba.com/js/data/widgets/home_season_leaders.json';
         }
         
-        // 4. HABERLER (NEWS)
+        // 4. HABERLER (ESPN)
         else if (type === 'news') {
             apiUrl = 'http://site.api.espn.com/apis/site/v2/sports/basketball/nba/news';
         }
 
         if (!apiUrl) return res.status(400).json({ error: 'Gecersiz istek' });
 
-        const response = await axios.get(apiUrl);
+        // NBA endpointleri için özel header
+        const headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Referer': 'https://www.nba.com/'
+        };
+
+        const response = await axios.get(apiUrl, { headers });
         res.status(200).json(response.data);
 
     } catch (error) {
-        // Hata detayını console'a yaz ama kullanıcıya temiz JSON dön
-        console.error("API Error:", error.message);
-        res.status(500).json({ error: 'Veri cekilemedi', details: error.message });
+        console.error("API Hatası:", error.message);
+        res.status(500).json({ error: 'API Error', details: error.message });
     }
 };
