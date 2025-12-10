@@ -5,439 +5,194 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NBA Pro Analytics</title>
     <style>
-        /* --- CSS (GÜNCELLENDİ) --- */
-        :root {
-            --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #e0e0e0;
-            --accent-color: #C9082A; --secondary-color: #17408B; --gold: #FDB927;
-        }
-        body { margin: 0; font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg-color); color: var(--text-color); overflow-x: hidden; }
-
-        /* HEADER & NAV */
-        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; background: var(--card-bg); border-bottom: 3px solid var(--accent-color); position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
-        .header-logo { font-weight: 900; font-size: 1.4rem; color: #fff; letter-spacing: 1px; }
-        .header-logo span { color: var(--accent-color); }
+        /* CSS AYARLARI */
+        :root { --bg: #121212; --card: #1e1e1e; --accent: #C9082A; --blue: #17408B; --text: #e0e0e0; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
         
-        nav { display: flex; gap: 5px; }
-        nav button { background: none; border: none; color: #aaa; font-size: 0.85rem; font-weight: 700; padding: 8px 10px; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
-        nav button:hover { color: #fff; }
-        nav button.active { color: #fff; border-bottom: 3px solid var(--accent-color); }
+        /* Header */
+        header { padding: 15px 30px; background: var(--card); border-bottom: 3px solid var(--accent); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 99; }
+        .logo { font-weight: 900; font-size: 1.5rem; color: #fff; } .logo span { color: var(--accent); }
+        nav button { background: none; border: none; color: #aaa; font-weight: 700; padding: 10px; cursor: pointer; text-transform: uppercase; }
+        nav button.active { color: #fff; border-bottom: 2px solid var(--accent); }
         
-        .lang-btn { background: #333; color: white; border: 1px solid #555; padding: 5px 12px; border-radius: 20px; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
+        /* Main */
+        main { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .section { display: none; }
+        .section.active { display: block; animation: fade 0.3s; }
+        @keyframes fade { from{opacity:0} to{opacity:1} }
 
-        /* CONTENT */
-        main { padding: 20px; max-width: 1200px; margin: 0 auto; min-height: 80vh; }
-        .section-content { display: none; animation: fadeIn 0.4s ease-out; }
-        .section-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* GAME & DATE */
-        .date-control { display: flex; justify-content: space-between; align-items: center; background: #252525; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #333; }
-        .date-input { background: #111; border: 1px solid #444; color: white; padding: 8px 15px; border-radius: 5px; font-family: inherit; font-size: 1rem; color-scheme: dark; }
-        .refresh-btn { background: var(--secondary-color); color: white; border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-
-        .games-grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); }
-        .game-card { background: var(--card-bg); border-radius: 12px; overflow: hidden; border: 1px solid #333; display: flex; flex-direction: column; transition: transform 0.2s; }
-        .game-card:hover { transform: translateY(-3px); border-color: var(--secondary-color); }
-        .matchup-row { display: flex; height: 110px; align-items: center; position: relative; }
-        .team-block { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1; }
-        .team-logo { width: 55px; height: 55px; object-fit: contain; margin-bottom: 5px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
-        .team-score { font-size: 1.8rem; font-weight: 800; margin-top: 5px; color: #fff; }
-        .vs-block { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 80px; }
-        .game-status { font-size: 0.8rem; color: var(--gold); font-weight: bold; margin-bottom: 5px; text-align: center; }
-        .card-footer { background: #252525; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #333; }
-        .details-btn { background: transparent; border: 1px solid #555; color: #ccc; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; }
-        .details-btn:hover { background: #fff; color: #000; }
-
-        /* STATS TABLE */
-        .table-container { background: #1e1e1e; border-radius: 8px; overflow: hidden; margin-top: 15px; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #111; padding: 15px; text-align: left; color: #888; font-size: 0.85rem; text-transform: uppercase; }
-        td { padding: 15px; border-bottom: 1px solid #333; color: #eee; }
-        .player-cell { display: flex; align-items: center; gap: 10px; }
-        .player-headshot { width: 40px; height: 40px; border-radius: 50%; background: #333; object-fit: cover; }
-        .stat-value { font-size: 1.2rem; font-weight: bold; color: var(--gold); }
-        .filter-btn { background: #333; border: none; color: white; padding: 8px 16px; border-radius: 20px; margin-right: 10px; cursor: pointer; }
-        .filter-btn.active { background: var(--secondary-color); }
-
-        /* NEWS */
+        /* Haberler */
         .news-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .news-card { background: var(--card-bg); border-radius: 10px; overflow: hidden; border: 1px solid #333; cursor: pointer; transition: 0.3s; }
-        .news-card:hover { transform: translateY(-5px); border-color: var(--secondary-color); }
-        .news-img { width: 100%; height: 180px; object-fit: cover; }
-        .news-body { padding: 15px; }
-        .news-title { font-weight: bold; font-size: 1rem; margin-bottom: 5px; color: #fff; }
+        .news-card { background: var(--card); border-radius: 8px; overflow: hidden; transition: 0.3s; cursor: pointer; border: 1px solid #333; }
+        .news-card:hover { transform: translateY(-5px); border-color: var(--blue); }
+        .news-img { width: 100%; height: 200px; object-fit: cover; }
+        .news-content { padding: 15px; }
+        .news-title { font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; color: #fff; }
+        .news-desc { font-size: 0.9rem; color: #aaa; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
-        /* INJURIES GROUPED */
-        .injury-team-group { margin-bottom: 25px; border: 1px solid #333; border-radius: 8px; overflow: hidden; background: #222; }
-        .injury-team-header { background: #111; padding: 10px 15px; font-weight: bold; color: var(--gold); display: flex; align-items: center; gap: 10px; }
-        .injury-team-logo { width: 30px; height: 30px; object-fit: contain; }
-        .injury-list { list-style: none; padding: 0; margin: 0; }
-        .injury-item { padding: 12px 15px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
-        .injury-item:last-child { border-bottom: none; }
-        .injury-status { font-size: 0.8rem; padding: 3px 8px; border-radius: 4px; font-weight: bold; }
-        .status-out { background: #d32f2f; color: white; }
-        .status-day { background: #fbc02d; color: black; }
-
-        /* MODAL */
-        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 2000; display: none; justify-content: center; align-items: center; }
-        .modal-content { background: #1e1e1e; width: 90%; max-width: 800px; max-height: 90vh; border-radius: 12px; overflow-y: auto; border: 1px solid #444; padding: 0; }
-        .modal-header { padding: 15px 20px; background: #252525; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
-        .modal-close { background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }
-        .bs-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        .bs-table th { background: #111; color: #aaa; position: sticky; top: 0; }
-        .bs-table td { border-bottom: 1px solid #333; text-align: center; }
-        .bs-table td:first-child { text-align: left; }
+        /* Maçlar */
+        .date-picker { background: #252525; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; }
+        .date-input { background: #111; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 4px; }
+        .btn { background: var(--blue); color: #fff; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        
+        .games-list { display: grid; gap: 15px; }
+        .game-card { background: var(--card); padding: 20px; border-radius: 10px; border: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        .team { display: flex; align-items: center; gap: 15px; width: 40%; }
+        .team img { width: 50px; height: 50px; object-fit: contain; background: #fff; border-radius: 50%; padding: 2px; }
+        .team-name { font-weight: bold; font-size: 1.2rem; }
+        .team-score { font-size: 1.5rem; font-weight: bold; margin-left: auto; }
+        .game-info { text-align: center; width: 20%; }
+        .status { color: var(--accent); font-weight: bold; font-size: 0.9rem; }
+        .clock { color: #888; font-size: 0.8rem; }
+        
+        /* Yardımcılar */
+        .loading { text-align: center; padding: 50px; color: #666; font-size: 1.2rem; }
+        .error { text-align: center; padding: 20px; color: #ff6b6b; }
+        
+        /* Stats & Injuries Placeholder */
+        .coming-soon { text-align: center; padding: 50px; background: #222; border-radius: 8px; color: #aaa; }
     </style>
 </head>
 <body>
 
-    <div id="details-modal" class="modal-overlay" onclick="closeModal()">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <div class="modal-header">
-                <h3 id="modal-title" style="margin:0">Box Score</h3>
-                <button class="modal-close" onclick="closeModal()">×</button>
-            </div>
-            <div id="modal-body" style="padding:20px;"></div>
-        </div>
-    </div>
-
     <header>
-        <div class="header-logo">NBA <span>ANALYTICS</span></div>
+        <div class="logo">NBA <span>PRO</span></div>
         <nav>
-            <button onclick="nav('home')" class="nav-btn active" id="btn-home">Home</button>
-            <button onclick="nav('games')" class="nav-btn" id="btn-games">Games</button>
-            <button onclick="nav('stats')" class="nav-btn" id="btn-stats">Stats</button>
-            <button onclick="nav('injuries')" class="nav-btn" id="btn-injuries">Injuries</button>
-            <button onclick="nav('lineups')" class="nav-btn" id="btn-lineups">Lineups</button>
+            <button onclick="show('home')" class="active" id="nav-home">Haberler</button>
+            <button onclick="show('games')" id="nav-games">Maçlar</button>
+            <button onclick="show('stats')" id="nav-stats">İstatistikler</button>
         </nav>
-        <button class="lang-btn" onclick="toggleLang()">EN / TR</button>
     </header>
 
     <main>
-        <section id="home" class="section-content active">
-            <h2 id="title-news">Latest News</h2>
-            <div id="home-content" class="news-grid">Loading News...</div>
+        <section id="home" class="section active">
+            <h2 style="border-left: 4px solid var(--accent); padding-left: 10px; margin-bottom: 20px;">Gündem (ESPN Real-Time)</h2>
+            <div id="news-container" class="news-grid"></div>
         </section>
 
-        <section id="games" class="section-content">
-            <div class="date-control">
+        <section id="games" class="section">
+            <div class="date-picker">
                 <input type="date" id="game-date" class="date-input">
-                <button class="refresh-btn" onclick="loadGames()">Refresh</button>
+                <button class="btn" onclick="fetchGames()">Verileri Getir</button>
             </div>
-            <div id="games-container" class="games-grid"></div>
+            <div id="games-container" class="games-list"></div>
         </section>
 
-        <section id="stats" class="section-content">
-            <h2 id="title-stats">Statistics</h2>
-            <div style="margin-bottom:15px;">
-                <button class="filter-btn active" onclick="loadStats('PTS')">Points</button>
-                <button class="filter-btn" onclick="loadStats('AST')">Assists</button>
-                <button class="filter-btn" onclick="loadStats('REB')">Rebounds</button>
+        <section id="stats" class="section">
+            <div class="coming-soon">
+                <h3>İstatistik Merkezi</h3>
+                <p>Gerçek veri entegrasyonu tamamlanıyor...</p>
             </div>
-            <div class="table-container">
-                <table id="stats-table">
-                    <thead><tr><th>#</th><th>Player</th><th>Team</th><th>Value</th></tr></thead>
-                    <tbody id="stats-body"></tbody>
-                </table>
-            </div>
-        </section>
-
-        <section id="injuries" class="section-content">
-            <h2 id="title-injuries">Injury Report</h2>
-            <div id="injuries-container">Loading...</div>
-        </section>
-
-        <section id="lineups" class="section-content">
-            <h2 id="title-lineups">Lineups</h2>
-            <div id="lineups-container" style="text-align:center; padding:20px;"></div>
         </section>
     </main>
 
     <script>
-        // --- AYARLAR ---
-        const teamsDB = { 'ATL':'#E03A3E','BOS':'#007A33','BKN':'#000000','CHA':'#1D1160','CHI':'#CE1141','CLE':'#860038','DAL':'#00538C','DEN':'#0E2240','DET':'#C8102E','GSW':'#1D428A','HOU':'#CE1141','IND':'#002D62','LAC':'#C8102E','LAL':'#552583','MEM':'#5D76A9','MIA':'#98002E','MIL':'#00471B','MIN':'#0C2340','NOP':'#0C2340','NYK':'#F58426','OKC':'#007AC1','ORL':'#0077C0','PHI':'#006BB6','PHX':'#1D1160','POR':'#E03A3E','SAC':'#5A2D81','SAS':'#C4CED4','TOR':'#CE1141','UTA':'#002B5C','WAS':'#002B5C' };
-        
-        const contentDB = {
-            en: { nav: {home:"Home", games:"Games", stats:"Stats", injuries:"Injuries", lineups:"Lineups"}, titles: {news:"Latest News", stats:"Statistics", injuries:"Injury Report", lineups:"Lineups"} },
-            tr: { nav: {home:"Ana Sayfa", games:"Maçlar", stats:"İstatistikler", injuries:"Sakatlıklar", lineups:"Kadrolar"}, titles: {news:"Son Haberler", stats:"İstatistikler", injuries:"Sakatlık Raporu", lineups:"Kadrolar"} }
-        };
-
-        // GARANTİ RESİM HAVUZU (Unsplash Basketbol)
-        const imagePool = [
-            "https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=600&auto=format&fit=crop",
-            "https://images.unsplash.com/photo-1504450758481-7338eba7524a?q=80&w=600&auto=format&fit=crop",
-            "https://images.unsplash.com/photo-1519861531473-920026393112?q=80&w=600&auto=format&fit=crop",
-            "https://images.unsplash.com/photo-1505666287802-93144f1754d3?q=80&w=600&auto=format&fit=crop",
-            "https://images.unsplash.com/photo-1574602695854-533d4a641263?q=80&w=600&auto=format&fit=crop"
-        ];
-
-        let currentLang = 'tr';
-
+        // Sayfa Yüklendiğinde
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('game-date').valueAsDate = new Date();
-            initApp();
+            fetchNews();
+            fetchGames();
         });
 
-        async function initApp() {
-            toggleLang();
-            loadNews();
-            loadGames();
-            loadStats('PTS');
-            loadInjuries();
-            loadLineups();
-        }
-
-        async function fetchAPI(type, params={}) {
-            const query = new URLSearchParams({ ...params, type, lang: currentLang, t: Date.now() }).toString();
-            try {
-                const res = await fetch(`/api/nba?${query}`);
-                if(type === 'news') return await res.text();
-                return await res.json();
-            } catch(e) { console.error(e); return null; }
-        }
-
-        // --- UI ---
-        function nav(id) {
-            document.querySelectorAll('.section-content').forEach(e => e.classList.remove('active'));
+        // Sekme Geçişi
+        function show(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('btn-'+id).classList.add('active');
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+            document.getElementById('nav-'+id).classList.add('active');
         }
 
-        function toggleLang() {
-            currentLang = currentLang === 'tr' ? 'en' : 'tr';
-            const txt = contentDB[currentLang];
-            Object.keys(txt.nav).forEach(k => { const el = document.getElementById('btn-'+k); if(el) el.innerText = txt.nav[k]; });
-            Object.keys(txt.titles).forEach(k => { const el = document.getElementById('title-'+k); if(el) el.innerText = txt.titles[k]; });
-            loadNews(); // Dili değişince haberi yenile
-        }
+        // --- 1. GERÇEK HABERLER (ESPN) ---
+        async function fetchNews() {
+            const container = document.getElementById('news-container');
+            container.innerHTML = '<div class="loading">Haberler yükleniyor...</div>';
 
-        function closeModal() { document.getElementById('details-modal').style.display = 'none'; }
+            try {
+                const res = await fetch('/api/nba?type=news');
+                const data = await res.json();
 
-        // --- HABERLER (DİL DESTEKLİ) ---
-        async function loadNews() {
-            const con = document.getElementById('home-content');
-            con.innerHTML = '<div style="text-align:center; padding:20px;">Loading News...</div>';
-            
-            const text = await fetchAPI('news');
-            const parser = new DOMParser();
-            const xml = parser.parseFromString(text, "text/xml");
-            const items = xml.getElementsByTagName('item');
-            con.innerHTML = '';
+                if (!data.articles || data.articles.length === 0) {
+                    container.innerHTML = '<div class="error">Haber bulunamadı.</div>';
+                    return;
+                }
 
-            for(let i=0; i<Math.min(items.length, 9); i++) {
-                const title = items[i].getElementsByTagName('title')[0]?.textContent || "";
-                const link = items[i].getElementsByTagName('link')[0]?.textContent || "#";
-                const img = imagePool[i % imagePool.length]; // Havuzdan resim al
-                
-                con.innerHTML += `
-                    <div class="news-card" onclick="window.open('${link}', '_blank')">
-                        <img src="${img}" class="news-img">
-                        <div class="news-body"><div class="news-title">${title}</div></div>
-                    </div>`;
+                container.innerHTML = '';
+                data.articles.forEach(item => {
+                    // Resim var mı kontrol et, yoksa varsayılan koy
+                    const img = item.images && item.images.length > 0 ? item.images[0].url : 'https://cdn.nba.com/manage/2023/04/NBA-Playoff-Picture-2023.jpg';
+                    
+                    container.innerHTML += `
+                        <div class="news-card" onclick="window.open('${item.links.web.href}', '_blank')">
+                            <img src="${img}" class="news-img">
+                            <div class="news-content">
+                                <div class="news-title">${item.headline}</div>
+                                <div class="news-desc">${item.description || ''}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                container.innerHTML = '<div class="error">Haber kaynağına ulaşılamadı.</div>';
+                console.error(error);
             }
         }
 
-        // --- MAÇLAR (CDN + FALLBACK) ---
-        async function loadGames() {
+        // --- 2. GERÇEK MAÇLAR (ESPN) ---
+        async function fetchGames() {
             const date = document.getElementById('game-date').value;
-            const con = document.getElementById('games-container');
-            con.innerHTML = '<div style="text-align:center; padding:20px;">Loading Scores...</div>';
-            
-            const data = await fetchAPI('scoreboard', { date });
-            con.innerHTML = '';
-            
-            // Veri yapısı CDN (scoreboard) veya API (scoreboardv2) olabilir
-            let games = [];
-            
-            // 1. CDN Yapısı (liveData)
-            if (data && data.scoreboard && data.scoreboard.games) {
-                games = data.scoreboard.games.map(g => ({
-                    id: g.gameId, status: g.gameStatusText, 
-                    home: g.homeTeam.teamTricode, away: g.awayTeam.teamTricode, 
-                    hScore: g.homeTeam.score, aScore: g.awayTeam.score
-                }));
-            } 
-            // 2. ScoreboardV2 Yapısı (resultSet)
-            else if (data && data.resultSets && data.resultSets[0].rowSet) {
-                const lines = data.resultSets[1]?.rowSet || [];
-                games = data.resultSets[0].rowSet.map(g => {
-                    const id = g[2];
-                    const hLine = lines.find(l => l[2] === id && l[3] === g[6]);
-                    const aLine = lines.find(l => l[2] === id && l[3] === g[7]);
-                    return {
-                        id: id, status: g[4], 
-                        home: hLine ? hLine[4] : 'HOM', away: aLine ? aLine[4] : 'AWY',
-                        hScore: hLine ? hLine[22] : 0, aScore: aLine ? aLine[22] : 0
-                    };
+            const container = document.getElementById('games-container');
+            container.innerHTML = '<div class="loading">Maç verileri çekiliyor...</div>';
+
+            try {
+                const res = await fetch(`/api/nba?type=scoreboard&date=${date}`);
+                const data = await res.json();
+
+                // Veri kontrolü
+                if (!data.events || data.events.length === 0) {
+                    container.innerHTML = '<div class="error">Bu tarihte maç bulunamadı.</div>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                
+                data.events.forEach(event => {
+                    const status = event.status.type.detail; // "Final", "Q4 - 2:00" vs
+                    const comp = event.competitions[0];
+                    const team1 = comp.competitors[1]; // Home (Genelde 1. index home olur ESPN'de ama kontrol edilebilir)
+                    const team2 = comp.competitors[0]; // Away
+
+                    container.innerHTML += `
+                        <div class="game-card">
+                            <div class="team">
+                                <img src="${team2.team.logo}">
+                                <div>
+                                    <div class="team-name">${team2.team.abbreviation}</div>
+                                    <div style="font-size:0.8rem; color:#888">${team2.records?.[0]?.summary || ''}</div>
+                                </div>
+                                <div class="team-score">${team2.score}</div>
+                            </div>
+                            
+                            <div class="game-info">
+                                <div class="status">${status}</div>
+                                <div class="clock">${event.date.substring(11,16)} GMT</div>
+                            </div>
+
+                            <div class="team" style="flex-direction:row-reverse; text-align:right;">
+                                <img src="${team1.team.logo}">
+                                <div>
+                                    <div class="team-name">${team1.team.abbreviation}</div>
+                                    <div style="font-size:0.8rem; color:#888">${team1.records?.[0]?.summary || ''}</div>
+                                </div>
+                                <div class="team-score">${team1.score}</div>
+                            </div>
+                        </div>
+                    `;
                 });
+
+            } catch (error) {
+                container.innerHTML = '<div class="error">Maç verisi alınamadı.</div>';
+                console.error(error);
             }
-
-            if (games.length === 0) {
-                con.innerHTML = '<div style="text-align:center; padding:20px;">No games found for this date.</div>';
-                return;
-            }
-
-            games.forEach(g => {
-                const logo = t => `https://cdn.nba.com/logos/nba/${teamsDB[t] ? Object.keys(teamsDB).find(k=>k===t) : '1610612747'}/primary/L/logo.svg`; // Fallback logo logic needed properly, using rough ID here or tri
-                // Logo trick: NBA IDs are fixed, but let's use ESPN logos for reliability
-                const espnLogo = t => `https://a.espncdn.com/i/teamlogos/nba/500/${t.toLowerCase()}.png`;
-
-                con.innerHTML += `
-                    <div class="game-card">
-                        <div class="matchup-row">
-                            <div class="team-block">
-                                <img src="${espnLogo(g.away)}" class="team-logo">
-                                <div style="font-weight:bold">${g.away}</div>
-                                <div class="team-score">${g.aScore}</div>
-                            </div>
-                            <div class="vs-block"><div class="game-status">${g.status}</div><div>VS</div></div>
-                            <div class="team-block">
-                                <img src="${espnLogo(g.home)}" class="team-logo">
-                                <div style="font-weight:bold">${g.home}</div>
-                                <div class="team-score">${g.hScore}</div>
-                            </div>
-                        </div>
-                        <div class="card-footer">
-                            <button class="details-btn" onclick="openBoxScore('${g.id}')">Box Score</button>
-                        </div>
-                    </div>`;
-            });
-        }
-
-        // --- İSTATİSTİKLER (UNDEFINED FIX) ---
-        async function loadStats(cat) {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            event?.target?.classList.add('active');
-
-            const tbody = document.getElementById('stats-body');
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading...</td></tr>';
-            
-            const data = await fetchAPI('stats', { category: cat });
-            
-            if(!data || !data.resultSet || !data.resultSet.rowSet) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No Data</td></tr>';
-                return;
-            }
-
-            const h = data.resultSet.headers;
-            const r = data.resultSet.rowSet.slice(0,5);
-            
-            // Dinamik Sütun Bulma
-            let iName = h.indexOf('PLAYER_NAME'); if(iName === -1) iName = h.indexOf('PLAYER');
-            let iTeam = h.indexOf('TEAM_ABBREVIATION'); if(iTeam === -1) iTeam = h.indexOf('TEAM');
-            const iVal = h.indexOf(cat);
-            const iId = h.indexOf('PLAYER_ID');
-
-            tbody.innerHTML = '';
-            r.forEach((row, idx) => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${idx+1}</td>
-                        <td>
-                            <div class="player-cell">
-                                <img src="https://cdn.nba.com/headshots/nba/latest/260x190/${row[iId]}.png" class="player-headshot" onerror="this.src='https://via.placeholder.com/40'">
-                                <span>${row[iName]}</span>
-                            </div>
-                        </td>
-                        <td>${row[iTeam]}</td>
-                        <td class="stat-value">${row[iVal]}</td>
-                    </tr>`;
-            });
-        }
-        
-        // --- SAKATLIKLAR (TAKIM BAZLI) ---
-        async function loadInjuries() {
-             // Mock Data (Demo için en sağlıklısı)
-             // Gerçek API olmadığı için kullanıcı deneyimini bozmamak adına kaliteli mock veri kullanıyoruz.
-             const mockInjuries = [
-                 { team: 'LAL', name: 'LeBron James', status: 'Day-to-Day', return: 'Questionable' },
-                 { team: 'LAL', name: 'Jarred Vanderbilt', status: 'Out', return: 'Weeks' },
-                 { team: 'GSW', name: 'Chris Paul', status: 'Out', return: 'Hand Surgery' },
-                 { team: 'PHX', name: 'Bradley Beal', status: 'Day-to-Day', return: 'Back' },
-                 { team: 'MEM', name: 'Ja Morant', status: 'Out', return: 'Season' },
-                 { team: 'PHI', name: 'Joel Embiid', status: 'Out', return: 'Knee' }
-             ];
-
-             const con = document.getElementById('injuries-container');
-             con.innerHTML = '';
-             
-             // Takımlara Göre Grupla
-             const grouped = {};
-             mockInjuries.forEach(i => {
-                 if(!grouped[i.team]) grouped[i.team] = [];
-                 grouped[i.team].push(i);
-             });
-
-             Object.keys(grouped).forEach(team => {
-                 const logo = `https://a.espncdn.com/i/teamlogos/nba/500/${team.toLowerCase()}.png`;
-                 let html = `<div class="injury-team-group">
-                                <div class="injury-team-header"><img src="${logo}" class="injury-team-logo"> ${team}</div>
-                                <ul class="injury-list">`;
-                 
-                 grouped[team].forEach(p => {
-                     const statusClass = p.status === 'Out' ? 'status-out' : 'status-day';
-                     html += `<li class="injury-item">
-                                 <div>${p.name}</div>
-                                 <div class="injury-status ${statusClass}">${p.status}</div>
-                              </li>`;
-                 });
-                 html += `</ul></div>`;
-                 con.innerHTML += html;
-             });
-        }
-
-        // --- LINEUPS (DEMO) ---
-        function loadLineups() {
-            document.getElementById('lineups-container').innerHTML = `
-                <div style="background:#222; padding:20px; border-radius:8px;">
-                    <h3 style="color:var(--gold)">Lakers vs Celtics (Projected)</h3>
-                    <div style="display:flex; justify-content:space-around;">
-                        <div style="text-align:left">
-                            <div style="font-weight:bold; margin-bottom:10px">LAL</div>
-                            <div>PG: D. Russell</div>
-                            <div>SG: A. Reaves</div>
-                            <div>SF: T. Prince</div>
-                            <div>PF: L. James</div>
-                            <div>C: A. Davis</div>
-                        </div>
-                        <div style="text-align:left">
-                            <div style="font-weight:bold; margin-bottom:10px">BOS</div>
-                            <div>PG: J. Holiday</div>
-                            <div>SG: D. White</div>
-                            <div>SF: J. Brown</div>
-                            <div>PF: J. Tatum</div>
-                            <div>C: K. Porzingis</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        async function openBoxScore(id) {
-            const modal = document.getElementById('details-modal');
-            const body = document.getElementById('modal-body');
-            modal.style.display = 'flex';
-            body.innerHTML = 'Loading...';
-            
-            const data = await fetchAPI('details', { gameId: id });
-            if(!data || !data.game || !data.game.homeTeam) {
-                body.innerHTML = 'Box score not available.';
-                return;
-            }
-            // CDN Boxscore yapısı
-            const h = data.game.homeTeam;
-            const a = data.game.awayTeam;
-            
-            const makeTable = (team) => {
-                let html = `<h4>${team.teamTricode} (${team.score})</h4><table class="bs-table"><thead><tr><th>Player</th><th>PTS</th><th>AST</th><th>REB</th></tr></thead><tbody>`;
-                team.players.forEach(p => {
-                    html += `<tr><td>${p.nameI} ${p.familyName}</td><td>${p.statistics.points}</td><td>${p.statistics.assists}</td><td>${p.statistics.reboundsTotal}</td></tr>`;
-                });
-                return html + '</tbody></table>';
-            };
-            
-            body.innerHTML = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">${makeTable(a)}${makeTable(h)}</div>`;
         }
     </script>
 </body>
