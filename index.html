@@ -9,7 +9,7 @@
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
         
         /* HEADER */
-        header { padding: 0 30px; background: var(--card); border-bottom: 3px solid var(--accent); display: flex; justify-content: space-between; align-items: center; height: 70px; position: sticky; top: 0; z-index: 99; }
+        header { padding: 0 30px; background: var(--card); border-bottom: 3px solid var(--accent); display: flex; justify-content: space-between; align-items: center; height: 70px; position: sticky; top: 0; z-index: 100; }
         .logo { font-weight: 900; font-size: 1.5rem; color: #fff; } .logo span { color: var(--accent); }
         
         nav { display: flex; gap: 15px; height: 100%; align-items: center; }
@@ -17,6 +17,7 @@
         nav button:hover, nav button.active { color: #fff; border-bottom-color: var(--accent); }
         
         .lang-btn { background: #333; color: #fff; border: 1px solid #555; padding: 6px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
+        .lang-btn:hover { background: var(--blue); }
 
         /* MAIN */
         main { max-width: 1200px; margin: 0 auto; padding: 20px; min-height: 80vh; }
@@ -48,7 +49,7 @@
         .box-btn { background: transparent; border: 1px solid #555; color: #ccc; padding: 6px 15px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
         .box-btn:hover { background: #fff; color: #000; }
 
-        /* MODAL */
+        /* MODAL (BOX SCORE) */
         .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 2000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
         .modal-content { background: #1e1e1e; width: 95%; max-width: 1000px; max-height: 90vh; border-radius: 12px; overflow-y: auto; border: 1px solid #444; }
         .modal-header { padding: 15px 20px; background: #252525; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
@@ -99,7 +100,7 @@
 
     <main>
         <section id="home" class="section active">
-            <h2 id="title-news" style="border-left: 4px solid var(--accent); padding-left: 10px;">Latest News</h2>
+            <h2 id="title-news" style="border-left: 4px solid var(--accent); padding-left: 10px; margin-bottom: 20px;">Latest News</h2>
             <div id="news-container" class="news-grid"></div>
         </section>
 
@@ -188,10 +189,10 @@
             try {
                 const res = await fetch('/api/nba?type=news');
                 const data = await res.json();
-                container.innerHTML = '';
                 
-                if(!data.articles) throw new Error();
+                if(!data.articles) throw new Error("No news");
 
+                container.innerHTML = '';
                 data.articles.slice(0, 9).forEach(item => {
                     const img = item.images[0]?.url || 'https://via.placeholder.com/300x200?text=NBA';
                     container.innerHTML += `
@@ -223,7 +224,6 @@
                     const comp = e.competitions[0];
                     const h = comp.competitors[0]; 
                     const a = comp.competitors[1];
-                    const btnTxt = currentLang === 'en' ? 'Box Score' : 'İstatistik';
                     
                     container.innerHTML += `
                         <div class="game-card">
@@ -240,14 +240,14 @@
                             </div>
                             <div class="game-footer">
                                 <span style="float:left; color:#FDB927; font-weight:bold">${e.status.type.detail}</span>
-                                <button class="box-btn" onclick="openBox('${e.id}', '${a.team.abbreviation}', '${h.team.abbreviation}')">${btnTxt}</button>
+                                <button class="box-btn" onclick="openBox('${e.id}', '${a.team.abbreviation}', '${h.team.abbreviation}')">Box Score</button>
                             </div>
                         </div>`;
                 });
             } catch (e) { container.innerHTML = '<div class="loader">Error loading games.</div>'; }
         }
 
-        // --- 3. BOX SCORE (FIXED PARSING) ---
+        // --- 3. BOX SCORE (DÜZELTİLDİ) ---
         async function openBox(id, teamA, teamB) {
             const modal = document.getElementById('modal');
             const body = document.getElementById('modal-body');
@@ -259,13 +259,13 @@
                 const res = await fetch(`/api/nba?type=boxscore&gameId=${id}`);
                 const data = await res.json();
 
-                // ESPN Yapısı: boxscore.players (Array) -> statistics (Array)
-                if(!data.boxscore || !data.boxscore.players) { 
-                    body.innerHTML = '<div class="loader">Data not available yet.</div>'; 
+                // HATA KONTROLÜ: boxscore.teams (Players yoksa hata verir)
+                if(!data.boxscore || !data.boxscore.teams) { 
+                    body.innerHTML = '<div class="error-msg">Box Score not available yet.</div>'; 
                     return; 
                 }
 
-                const teams = data.boxscore.players; 
+                const teams = data.boxscore.teams; // ESPN Summary yapısında oyuncular teams[i].statistics içinde olur
                 let html = '<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">';
                 
                 teams.forEach(team => {
@@ -274,18 +274,16 @@
                     
                     if(team.statistics) {
                         team.statistics.forEach(p => {
-                            // ESPN Stats Dizilimi: 0:MIN, 13:PTS, 7:AST, 6:REB
-                            // Eğer labels varsa, indexleri dinamik bulabiliriz ama sabit sıra genelde değişmez.
+                            // Stats dizisi: 0:MIN, 13:PTS, 7:AST, 6:REB (ESPN Standart Sırası)
                             const stats = p.stats;
-                            const name = p.athlete.displayName;
                             const pts = stats[13] || 0;
                             const ast = stats[7] || 0;
                             const reb = stats[6] || 0;
                             const min = stats[0];
 
-                            // Oynamayanları (DNP) filtrele
-                            if(min !== "0" && min !== "0.0" && min !== "--") {
-                                html += `<tr><td>${name}</td><td>${pts}</td><td>${ast}</td><td>${reb}</td></tr>`;
+                            // Sadece oynayanları göster
+                            if(min && min !== "0" && min !== "0.0") { 
+                                html += `<tr><td>${p.athlete.displayName}</td><td>${pts}</td><td>${ast}</td><td>${reb}</td></tr>`;
                             }
                         });
                     }
@@ -297,11 +295,11 @@
 
             } catch (e) { 
                 console.error(e);
-                body.innerHTML = '<div class="loader">Error details.</div>'; 
+                body.innerHTML = '<div class="error-msg">Error loading box score details.</div>'; 
             }
         }
 
-        // --- 4. İSTATİSTİKLER (UNDEFINED FIX) ---
+        // --- 4. İSTATİSTİKLER (DÜZELTİLDİ) ---
         async function fetchStats() {
             const container = document.getElementById('stats-container');
             
@@ -313,10 +311,10 @@
 
                 let html = `<table class="stats-table"><thead><tr><th>#</th><th>Player</th><th>Team</th><th>PPG</th></tr></thead><tbody>`;
                 data.athletes.forEach((p, i) => {
-                    // Güvenli veri okuma
+                    // VERİ GÜVENLİĞİ: Bazen displayName gelmeyebilir
                     const name = p.athlete.displayName || p.athlete.fullName || "Unknown";
                     const team = p.athlete.team ? p.athlete.team.abbreviation : "-";
-                    const val = p.categories[0].values[0];
+                    const val = p.categories && p.categories[0] ? p.categories[0].values[0] : "0";
                     const img = p.athlete.headshot ? p.athlete.headshot.href : "https://via.placeholder.com/40";
 
                     html += `<tr>
@@ -327,7 +325,7 @@
                     </tr>`;
                 });
                 container.innerHTML = html + '</tbody></table>';
-            } catch(e) { container.innerHTML = '<div class="loader">Stats currently unavailable.</div>'; }
+            } catch(e) { container.innerHTML = '<div class="error-msg">Stats unavailable.</div>'; }
         }
     </script>
 </body>
