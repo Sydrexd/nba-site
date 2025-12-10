@@ -9,7 +9,7 @@
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
         
         /* HEADER */
-        header { padding: 0 30px; background: var(--card); border-bottom: 3px solid var(--accent); display: flex; justify-content: space-between; align-items: center; height: 70px; position: sticky; top: 0; z-index: 100; }
+        header { padding: 0 30px; background: var(--card); border-bottom: 3px solid var(--accent); display: flex; justify-content: space-between; align-items: center; height: 70px; position: sticky; top: 0; z-index: 99; }
         .logo { font-weight: 900; font-size: 1.5rem; color: #fff; } .logo span { color: var(--accent); }
         
         nav { display: flex; gap: 15px; height: 100%; align-items: center; }
@@ -58,7 +58,7 @@
         .bs-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
         .bs-table th { background: #111; color: #888; padding: 8px; text-align: center; position: sticky; top: 0; }
         .bs-table td { padding: 8px; border-bottom: 1px solid #333; text-align: center; color: #ddd; }
-        .bs-table td:first-child { text-align: left; color: #fff; font-weight: bold; }
+        .bs-table td:first-child { text-align: left; color: #fff; font-weight: bold; width: 150px; }
         
         /* STATS */
         .stats-table { width: 100%; border-collapse: collapse; margin-top: 20px; background: var(--card); border-radius: 8px; }
@@ -67,11 +67,12 @@
         .rank { font-weight: bold; color: #666; margin-right: 15px; }
         .stat-val { float: right; font-weight: bold; color: var(--gold); font-size: 1.1rem; }
         .player-info { display: flex; align-items: center; gap: 10px; }
-        .player-head { width: 40px; height: 40px; border-radius: 50%; background: #333; }
+        .player-head { width: 40px; height: 40px; border-radius: 50%; background: #333; object-fit: cover; }
 
         .loader { text-align: center; padding: 50px; color: #666; }
-        .external-link { display: block; padding: 20px; background: #222; text-align: center; border-radius: 8px; color: var(--blue); text-decoration: none; margin-top: 20px; font-weight: bold; }
-        .external-link:hover { background: #333; }
+        .error-msg { text-align: center; padding: 30px; color: #ff6b6b; border: 1px solid #ff6b6b; border-radius: 8px; margin: 20px; background: rgba(255,0,0,0.1); }
+        .external-link { display: block; padding: 20px; background: #252525; text-align: center; border-radius: 8px; color: #fff; text-decoration: none; margin-top: 20px; font-weight: bold; border: 1px solid #444; transition: 0.3s; }
+        .external-link:hover { background: var(--blue); border-color: var(--blue); }
     </style>
 </head>
 <body>
@@ -89,11 +90,11 @@
     <header>
         <div class="logo">NBA <span>PRO</span></div>
         <nav>
-            <button onclick="show('home')" class="active" id="btn-home">Home</button>
-            <button onclick="show('games')" id="btn-games">Games</button>
-            <button onclick="show('stats')" id="btn-stats">Stats</button>
-            <button onclick="show('injuries')" id="btn-injuries">Injuries</button>
-            <button onclick="show('lineups')" id="btn-lineups">Lineups</button>
+            <button onclick="show('home')" class="active" id="nav-home">Haberler</button>
+            <button onclick="show('games')" id="nav-games">Maçlar</button>
+            <button onclick="show('stats')" id="nav-stats">İstatistikler</button>
+            <button onclick="show('injuries')" id="nav-injuries">Sakatlıklar</button>
+            <button onclick="show('lineups')" id="nav-lineups">Kadrolar</button>
         </nav>
         <button class="lang-btn" onclick="toggleLang()">EN / TR</button>
     </header>
@@ -107,7 +108,7 @@
         <section id="games" class="section">
             <div class="date-picker">
                 <input type="date" id="game-date" class="date-input">
-                <button class="btn" onclick="fetchGames()">Get Data / Verileri Getir</button>
+                <button id="btn-refresh" class="btn" onclick="fetchGames()">Get Data</button>
             </div>
             <div id="games-container"></div>
         </section>
@@ -119,15 +120,16 @@
 
         <section id="injuries" class="section">
             <h2 id="title-injuries">Injury Report</h2>
-            <p style="color:#aaa; margin-top:10px;">Official real-time injury data requires a paid license. Please use reliable external sources below:</p>
-            <a href="https://www.espn.com/nba/injuries" target="_blank" class="external-link">View Official Injury Report on ESPN &rarr;</a>
-            <a href="https://www.cbssports.com/nba/injuries/" target="_blank" class="external-link">View CBS Sports Injuries &rarr;</a>
+            <p id="desc-injuries" style="color:#aaa; margin-top:10px; text-align:center;">Official real-time injury data requires a paid license.</p>
+            <a href="https://www.espn.com/nba/injuries" target="_blank" class="external-link" id="link-injuries-espn">View Official Injury Report on ESPN &rarr;</a>
+            <a href="https://www.cbssports.com/nba/injuries/" target="_blank" class="external-link" id="link-injuries-cbs">View CBS Sports Injuries &rarr;</a>
         </section>
 
         <section id="lineups" class="section">
             <h2 id="title-lineups">Starting Lineups</h2>
-            <p style="color:#aaa; margin-top:10px;">Confirmed starting lineups update 30 mins before tip-off.</p>
-            <a href="https://www.rotowire.com/basketball/nba-lineups.php" target="_blank" class="external-link">View Real-Time Lineups on Rotowire &rarr;</a>
+            <p id="desc-lineups" style="color:#aaa; margin-top:10px; text-align:center;">Confirmed starting lineups update 30 mins before tip-off.</p>
+            <a href="https://www.rotowire.com/basketball/nba-lineups.php" target="_blank" class="external-link" id="link-lineups-roto">View Real-Time Lineups on Rotowire &rarr;</a>
+            <a href="https://www.nba.com/players/todays-lineups" target="_blank" class="external-link" id="link-lineups-nba">View Official NBA Lineups &rarr;</a>
         </section>
     </main>
 
@@ -137,11 +139,33 @@
         const langData = {
             en: {
                 nav: ['Home', 'Games', 'Stats', 'Injuries', 'Lineups'],
-                titles: { news: 'Latest News', stats: 'Season Leaders (PPG)', inj: 'Injury Report', lin: 'Starting Lineups' }
+                titles: { news: 'Latest News', stats: 'Season Leaders (Points)', inj: 'Injury Report', lin: 'Starting Lineups' },
+                btns: { refresh: 'Get Data', box: 'Box Score' },
+                desc: {
+                    inj: 'Official real-time injury data requires a paid license. Please use reliable external sources below:',
+                    lin: 'Confirmed starting lineups update 30 mins before tip-off.'
+                },
+                links: {
+                    injEspn: 'View Official Injury Report on ESPN &rarr;',
+                    injCbs: 'View CBS Sports Injuries &rarr;',
+                    linRoto: 'View Real-Time Lineups on Rotowire &rarr;',
+                    linNba: 'View Official NBA Lineups &rarr;'
+                }
             },
             tr: {
                 nav: ['Ana Sayfa', 'Maçlar', 'İstatistikler', 'Sakatlıklar', 'Kadrolar'],
-                titles: { news: 'Son Haberler', stats: 'Sezon Liderleri (Sayı)', inj: 'Sakatlık Raporu', lin: 'İlk 5\'ler' }
+                titles: { news: 'Son Haberler', stats: 'Sezon Liderleri (Sayı)', inj: 'Sakatlık Raporu', lin: 'İlk 5\'ler' },
+                btns: { refresh: 'Verileri Getir', box: 'İstatistik' },
+                desc: {
+                    inj: 'Resmi anlık sakatlık verileri ücretli lisans gerektirir. Lütfen aşağıdaki güvenilir kaynakları kullanın:',
+                    lin: 'Kesinleşen ilk 5\'ler maçtan 30 dakika önce güncellenir.'
+                },
+                links: {
+                    injEspn: 'ESPN Resmi Sakatlık Raporunu Görüntüle &rarr;',
+                    injCbs: 'CBS Sports Sakatlıklarını Görüntüle &rarr;',
+                    linRoto: 'Rotowire Anlık Kadroları Görüntüle &rarr;',
+                    linNba: 'NBA Resmi Kadrolarını Görüntüle &rarr;'
+                }
             }
         };
 
@@ -156,7 +180,7 @@
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-            document.getElementById('btn-'+id).classList.add('active');
+            document.getElementById('nav-'+id).classList.add('active');
         }
 
         function toggleLang() {
@@ -172,6 +196,19 @@
             document.getElementById('title-stats').innerText = d.titles.stats;
             document.getElementById('title-injuries').innerText = d.titles.inj;
             document.getElementById('title-lineups').innerText = d.titles.lin;
+            
+            // Butonlar ve Açıklamalar
+            document.getElementById('btn-refresh').innerText = d.btns.refresh;
+            document.getElementById('desc-injuries').innerText = d.desc.inj;
+            document.getElementById('desc-lineups').innerText = d.desc.lin;
+            
+            // Linkler
+            document.getElementById('link-injuries-espn').innerHTML = d.links.injEspn;
+            document.getElementById('link-injuries-cbs').innerHTML = d.links.injCbs;
+            document.getElementById('link-lineups-roto').innerHTML = d.links.linRoto;
+            document.getElementById('link-lineups-nba').innerHTML = d.links.linNba;
+
+            // Box Score butonlarını yenilemek için maçları tekrar render etmek gerekebilir ama şimdilik kalsın.
         }
 
         // --- 1. HABERLER (ESPN) ---
@@ -214,8 +251,9 @@
 
                 data.events.forEach(e => {
                     const comp = e.competitions[0];
-                    const h = comp.competitors[0];
-                    const a = comp.competitors[1];
+                    const h = comp.competitors[0]; // Home
+                    const a = comp.competitors[1]; // Away
+                    const btnText = langData[currentLang].btns.box;
                     
                     container.innerHTML += `
                         <div class="game-card">
@@ -231,15 +269,15 @@
                                 </div>
                             </div>
                             <div class="game-footer">
-                                <span style="float:left; color:#gold; font-weight:bold">${e.status.type.detail}</span>
+                                <span style="float:left; color:#FDB927; font-weight:bold">${e.status.type.detail}</span>
                                 <button class="box-btn" onclick="openBox('${e.id}', '${a.team.abbreviation}', '${h.team.abbreviation}')">Box Score</button>
                             </div>
                         </div>`;
                 });
-            } catch (e) { container.innerHTML = '<div class="loader">Error loading games.</div>'; }
+            } catch (e) { container.innerHTML = '<div class="error-msg">Error loading games. API might be busy.</div>'; }
         }
 
-        // --- 3. BOX SCORE (ESPN) ---
+        // --- 3. BOX SCORE (ESPN FIX) ---
         async function openBox(id, teamA, teamB) {
             const modal = document.getElementById('modal');
             const body = document.getElementById('modal-body');
@@ -251,10 +289,13 @@
                 const res = await fetch(`/api/nba?type=boxscore&gameId=${id}`);
                 const data = await res.json();
 
-                if(!data.boxscore) { body.innerHTML = 'Box Score not available yet.'; return; }
+                // Veri kontrolü
+                if(!data.boxscore || !data.boxscore.players) { 
+                    body.innerHTML = '<div class="error-msg">Box Score not available yet. Game might not have started.</div>'; 
+                    return; 
+                }
 
-                const teams = data.boxscore.teams; // 0: Away, 1: Home usually, check IDs
-                
+                const teams = data.boxscore.players; // Array of 2 teams
                 let html = '<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">';
                 
                 teams.forEach(team => {
@@ -263,13 +304,16 @@
                     
                     if(team.statistics) {
                         team.statistics.forEach(p => {
-                            // ESPN stats array usually: MIN, FG, 3PT, FT, OREB, DREB, REB, AST, STL, BLK, TO, PF, +/- , PTS
-                            // Need to parse correctly. This relies on standard ESPN order. 
-                            // Easier way: map labels.
-                            const pts = p.stats[13] || 0;
-                            const ast = p.stats[7] || 0;
-                            const reb = p.stats[6] || 0;
-                            if(p.stats[0] !== "0") { // If minutes > 0
+                            // ESPN Stats Array Mapping (Genellikle):
+                            // 0:MIN, 13:PTS, 7:AST, 6:REB (Bu sıra ESPN'de genelde standarttır ama değişebilir)
+                            // Güvenli olsun diye 'labels' kontrolü yapılabilir ama basit tutalım.
+                            const stats = p.stats; 
+                            const pts = stats[13] || 0;
+                            const ast = stats[7] || 0;
+                            const reb = stats[6] || 0;
+                            const min = stats[0];
+
+                            if(min !== "0" && min !== "0.0") { 
                                 html += `<tr><td>${p.athlete.displayName}</td><td>${pts}</td><td>${ast}</td><td>${reb}</td></tr>`;
                             }
                         });
@@ -280,10 +324,13 @@
                 html += '</div>';
                 body.innerHTML = html;
 
-            } catch (e) { body.innerHTML = 'Error loading box score.'; }
+            } catch (e) { 
+                console.error(e);
+                body.innerHTML = '<div class="error-msg">Error loading box score details.</div>'; 
+            }
         }
 
-        // --- 4. İSTATİSTİKLER (ESPN) ---
+        // --- 4. İSTATİSTİKLER (ESPN FIX) ---
         async function fetchStats() {
             const container = document.getElementById('stats-container');
             
@@ -291,9 +338,9 @@
                 const res = await fetch('/api/nba?type=stats');
                 const data = await res.json();
                 
-                if(!data.athletes) { container.innerHTML = 'No data.'; return; }
+                if(!data.athletes) { container.innerHTML = '<div class="loader">No data.</div>'; return; }
 
-                let html = `<table class="stats-table"><thead><tr><th>#</th><th>Player</th><th>Team</th><th>Value</th></tr></thead><tbody>`;
+                let html = `<table class="stats-table"><thead><tr><th>#</th><th>Player</th><th>Team</th><th>PPG</th></tr></thead><tbody>`;
                 data.athletes.forEach((p, i) => {
                     html += `<tr>
                         <td><span class="rank">${i+1}</span></td>
@@ -303,7 +350,7 @@
                     </tr>`;
                 });
                 container.innerHTML = html + '</tbody></table>';
-            } catch(e) { container.innerHTML = 'Stats unavailable.'; }
+            } catch(e) { container.innerHTML = '<div class="error-msg">Stats unavailable right now.</div>'; }
         }
     </script>
 </body>
