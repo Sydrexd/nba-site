@@ -1,8 +1,9 @@
 const axios = require('axios');
 
 module.exports = async (req, res) => {
-    const { type, date, gameId } = req.query;
+    const { type, date, gameId, category } = req.query;
 
+    // CORS İzinleri
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -15,8 +16,10 @@ module.exports = async (req, res) => {
     try {
         let apiUrl = '';
 
+        // 1. MAÇLAR (SCOREBOARD)
         if (type === 'scoreboard') {
             let dateParam = '';
+            // Tarih seçilmişse
             if (date) {
                 const d = new Date(date);
                 const yyyy = d.getFullYear();
@@ -26,14 +29,20 @@ module.exports = async (req, res) => {
             }
             apiUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard${dateParam}`;
         }
+        
+        // 2. MAÇ DETAYI (BOX SCORE - SUMMARY ENDPOINT)
         else if (type === 'boxscore') {
-            // ESPN Summary (En kapsamlı veri)
+            // Bu endpoint hem skorları, hem play-by-play hem de boxscore'u verir.
             apiUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=${gameId}`;
         }
+        
+        // 3. İSTATİSTİKLER (STATS LEADERS)
         else if (type === 'stats') {
-            // Sezonluk Liderler
+            // ESPN Web API - Sezonluk Liderler
             apiUrl = 'https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/athletes?region=us&lang=en&contentorigin=espn&isqualified=true&page=1&limit=10&sort=offensive.avgPoints%3Adesc';
         }
+        
+        // 4. HABERLER (NEWS)
         else if (type === 'news') {
             apiUrl = 'http://site.api.espn.com/apis/site/v2/sports/basketball/nba/news';
         }
@@ -44,6 +53,8 @@ module.exports = async (req, res) => {
         res.status(200).json(response.data);
 
     } catch (error) {
-        res.status(500).json({ error: 'API Hatasi', details: error.message });
+        // Hata detayını console'a yaz ama kullanıcıya temiz JSON dön
+        console.error("API Error:", error.message);
+        res.status(500).json({ error: 'Veri cekilemedi', details: error.message });
     }
 };
