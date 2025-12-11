@@ -1,7 +1,7 @@
 const axios = require('axios');
 
 module.exports = async (req, res) => {
-    const { type, date, gameId } = req.query;
+    const { type, date, gameId, lang } = req.query;
 
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -14,13 +14,13 @@ module.exports = async (req, res) => {
 
     try {
         let apiUrl = '';
+        let isJson = true;
 
-        // 1. MAÇLAR (SCOREBOARD) -> SADECE ESPN (ID Tutarlılığı İçin)
+        // 1. MAÇLAR (SCOREBOARD) -> ESPN
         if (type === 'scoreboard') {
-            // Tarih seçimi varsa ona göre, yoksa bugünün maçı
-            // ESPN Formatı: YYYYMMDD
             let dateParam = '';
             if (date) {
+                // YYYY-MM-DD -> YYYYMMDD
                 const d = new Date(date);
                 const yyyy = d.getFullYear();
                 const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -30,18 +30,17 @@ module.exports = async (req, res) => {
             apiUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard${dateParam}`;
         }
         
-        // 2. BOX SCORE -> SADECE ESPN (Scoreboard'dan gelen ID ile çalışır)
+        // 2. BOX SCORE -> ESPN
         else if (type === 'boxscore') {
             apiUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=${gameId}`;
         }
         
         // 3. İSTATİSTİKLER -> NBA CDN (Asla Engellenmez)
         else if (type === 'stats') {
-            // Tüm oyuncuların güncel istatistiklerini tutan statik dosya
             apiUrl = 'https://cdn.nba.com/static/json/liveData/playerstats/allplayers.json';
         }
         
-        // 4. HABERLER -> ESPN
+        // 4. HABERLER -> ESPN JSON API (RSS Değil)
         else if (type === 'news') {
             apiUrl = 'http://site.api.espn.com/apis/site/v2/sports/basketball/nba/news';
         }
