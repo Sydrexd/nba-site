@@ -14,7 +14,6 @@ module.exports = async (req, res) => {
 
     try {
         let apiUrl = '';
-        let isJson = true;
 
         // 1. MAÇLAR (SCOREBOARD) -> ESPN
         if (type === 'scoreboard') {
@@ -35,12 +34,12 @@ module.exports = async (req, res) => {
             apiUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=${gameId}`;
         }
         
-        // 3. İSTATİSTİKLER -> NBA CDN (Asla Engellenmez)
+        // 3. İSTATİSTİKLER -> NBA CDN (Asla Engellenmez - %100 Gerçek)
         else if (type === 'stats') {
             apiUrl = 'https://cdn.nba.com/static/json/liveData/playerstats/allplayers.json';
         }
         
-        // 4. HABERLER -> ESPN JSON API (RSS Değil)
+        // 4. HABERLER -> ESPN JSON API
         else if (type === 'news') {
             apiUrl = 'http://site.api.espn.com/apis/site/v2/sports/basketball/nba/news';
         }
