@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src * data:; connect-src *;">
     <title>NBA Pro Analytics</title>
     <style>
         :root { --bg: #121212; --card: #1e1e1e; --accent: #C9082A; --blue: #17408B; --text: #e0e0e0; --gold: #FDB927; }
@@ -71,11 +72,11 @@
 </head>
 <body>
 
-    <div id="modal" class="modal-overlay" onclick="document.getElementById('modal').style.display='none'">
-        <div class="modal-content" onclick="event.stopPropagation()">
+    <div id="modal" class="modal-overlay">
+        <div class="modal-content">
             <div class="modal-header">
                 <h3 id="modal-title" style="margin:0">Box Score</h3>
-                <button class="modal-close" onclick="document.getElementById('modal').style.display='none'">×</button>
+                <button class="modal-close" id="close-modal">×</button>
             </div>
             <div id="modal-body" style="padding:20px;"></div>
         </div>
@@ -84,13 +85,13 @@
     <header>
         <div class="logo">NBA <span>PRO</span></div>
         <nav>
-            <button onclick="show('home')" class="active" id="nav-home">Haberler</button>
-            <button onclick="show('games')" id="nav-games">Maçlar</button>
-            <button onclick="show('stats')" id="nav-stats">İstatistikler</button>
-            <button onclick="show('injuries')" id="nav-injuries">Sakatlıklar</button>
-            <button onclick="show('lineups')" id="nav-lineups">Kadrolar</button>
+            <button data-section="home" class="active nav-btn" id="nav-home">Haberler</button>
+            <button data-section="games" class="nav-btn" id="nav-games">Maçlar</button>
+            <button data-section="stats" class="nav-btn" id="nav-stats">İstatistikler</button>
+            <button data-section="injuries" class="nav-btn" id="nav-injuries">Sakatlıklar</button>
+            <button data-section="lineups" class="nav-btn" id="nav-lineups">Kadrolar</button>
         </nav>
-        <button class="lang-btn" onclick="toggleLang()">EN / TR</button>
+        <button class="lang-btn" id="lang-toggle">EN / TR</button>
     </header>
 
     <main>
@@ -102,7 +103,7 @@
         <section id="games" class="section">
             <div class="date-picker">
                 <input type="date" id="game-date" class="date-input">
-                <button id="btn-refresh" class="btn" onclick="fetchGames()">Get Data</button>
+                <button id="btn-refresh" class="btn">Get Data</button>
             </div>
             <div id="games-container"></div>
         </section>
@@ -132,8 +133,31 @@
             tr: { nav: ['Ana Sayfa', 'Maçlar', 'İstatistikler', 'Sakatlıklar', 'Kadrolar'], titles: { news: 'Son Haberler', stats: 'Sezon Liderleri (Sayı)', inj: 'Sakatlık Raporu', lin: 'İlk 5\'ler' }, btns: { refresh: 'Verileri Getir', box: 'İstatistik' }, desc: { inj: 'Resmi anlık sakatlık verileri ücretli lisans gerektirir. Güvenilir kaynaklar:', lin: 'Kesinleşen ilk 5\'ler maçtan 30 dakika önce güncellenir.' }, links: { injEspn: 'ESPN Resmi Sakatlık Raporunu Görüntüle &rarr;', linRoto: 'Rotowire Anlık Kadroları Görüntüle &rarr;' } }
         };
 
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('game-date').valueAsDate = new Date();
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            document.getElementById('game-date').valueAsDate = today;
+            
+            // Nav buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    show(this.getAttribute('data-section'));
+                });
+            });
+            
+            // Modal close
+            document.getElementById('close-modal').addEventListener('click', closeModal);
+            document.getElementById('modal').addEventListener('click', function(e) {
+                if (e.target.id === 'modal') closeModal();
+            });
+            
+            // Language toggle
+            document.getElementById('lang-toggle').addEventListener('click', toggleLang);
+            
+            // Refresh button
+            document.getElementById('btn-refresh').addEventListener('click', fetchGames);
+            
+            // Initial data load
             fetchNews();
             fetchGames();
             fetchStats();
@@ -142,14 +166,14 @@
         function show(id) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-            document.getElementById('nav-'+id).classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('[data-section="' + id + '"]').classList.add('active');
         }
 
         function toggleLang() {
             currentLang = currentLang === 'en' ? 'tr' : 'en';
             const d = langData[currentLang];
-            const btns = document.querySelectorAll('nav button');
+            const btns = document.querySelectorAll('.nav-btn');
             btns.forEach((b, i) => b.innerText = d.nav[i]);
             document.getElementById('title-news').innerText = d.titles.news;
             document.getElementById('title-stats').innerText = d.titles.stats;
@@ -162,6 +186,10 @@
             document.getElementById('link-lineups-roto').innerHTML = d.links.linRoto;
         }
 
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
         // --- 1. NEWS (ESPN JSON) ---
         async function fetchNews() {
             const container = document.getElementById('news-container');
@@ -169,11 +197,17 @@
             try {
                 const res = await fetch('/api/nba?type=news');
                 const data = await res.json();
-                if(!data.articles) throw new Error();
+                if(!data.articles) throw new Error('No articles');
                 container.innerHTML = '';
                 data.articles.slice(0, 9).forEach(item => {
-                    const img = item.images?.[0]?.url || 'https://via.placeholder.com/300x200?text=NBA';
-                    container.innerHTML += `<div class="news-card" onclick="window.open('${item.links.web.href}')"><img src="${img}" class="news-img"><div class="news-body"><div class="news-title">${item.headline}</div></div></div>`;
+                    const img = item.images && item.images[0] ? item.images[0].url : 'https://via.placeholder.com/300x200?text=NBA';
+                    const card = document.createElement('div');
+                    card.className = 'news-card';
+                    card.innerHTML = '<img src="' + img + '" class="news-img"><div class="news-body"><div class="news-title">' + item.headline + '</div></div>';
+                    card.addEventListener('click', function() {
+                        window.open(item.links.web.href, '_blank');
+                    });
+                    container.appendChild(card);
                 });
             } catch (e) { 
                 console.error('News error:', e);
@@ -187,10 +221,10 @@
             const container = document.getElementById('games-container');
             container.innerHTML = '<div class="loader">Loading Scores...</div>';
             try {
-                const res = await fetch(`/api/nba?type=scoreboard&date=${date}`);
+                const res = await fetch('/api/nba?type=scoreboard&date=' + date);
                 const data = await res.json();
                 
-                console.log('Games data:', data); // DEBUG
+                console.log('Games data:', data);
                 
                 container.innerHTML = '';
                 if (!data.events || data.events.length === 0) { 
@@ -204,23 +238,15 @@
                     const a = comp.competitors.find(t => t.homeAway === 'away');
                     const btn = langData[currentLang].btns.box;
                     
-                    container.innerHTML += `<div class="game-card">
-                        <div class="game-main">
-                            <div class="team">
-                                <img src="${a.team.logo}">
-                                <div>${a.team.abbreviation}</div>
-                            </div>
-                            <div class="score">${a.score || 0} - ${h.score || 0}</div>
-                            <div class="team">
-                                <img src="${h.team.logo}">
-                                <div>${h.team.abbreviation}</div>
-                            </div>
-                        </div>
-                        <div class="game-footer">
-                            <span style="float:left;color:#FDB927;font-weight:bold">${e.status.type.detail}</span>
-                            <button class="box-btn" onclick="openBox('${e.id}', '${a.team.abbreviation}', '${h.team.abbreviation}')">${btn}</button>
-                        </div>
-                    </div>`;
+                    const card = document.createElement('div');
+                    card.className = 'game-card';
+                    card.innerHTML = '<div class="game-main"><div class="team"><img src="' + a.team.logo + '"><div>' + a.team.abbreviation + '</div></div><div class="score">' + (a.score || 0) + ' - ' + (h.score || 0) + '</div><div class="team"><img src="' + h.team.logo + '"><div>' + h.team.abbreviation + '</div></div></div><div class="game-footer"><span style="float:left;color:#FDB927;font-weight:bold">' + e.status.type.detail + '</span><button class="box-btn" data-gameid="' + e.id + '" data-away="' + a.team.abbreviation + '" data-home="' + h.team.abbreviation + '">' + btn + '</button></div>';
+                    
+                    card.querySelector('.box-btn').addEventListener('click', function() {
+                        openBox(this.getAttribute('data-gameid'), this.getAttribute('data-away'), this.getAttribute('data-home'));
+                    });
+                    
+                    container.appendChild(card);
                 });
             } catch (e) { 
                 console.error('Games error:', e);
@@ -233,14 +259,14 @@
             const modal = document.getElementById('modal');
             const body = document.getElementById('modal-body');
             modal.style.display = 'flex';
-            document.getElementById('modal-title').innerText = `${tA} vs ${tB}`;
+            document.getElementById('modal-title').innerText = tA + ' vs ' + tB;
             body.innerHTML = '<div class="loader">Loading...</div>';
             
             try {
-                const res = await fetch(`/api/nba?type=boxscore&gameId=${id}`);
+                const res = await fetch('/api/nba?type=boxscore&gameId=' + id);
                 const data = await res.json();
                 
-                console.log('Box score data:', data); // DEBUG
+                console.log('Box score data:', data);
                 
                 if(!data.boxscore || !data.boxscore.players) { 
                     body.innerHTML = '<div class="error-msg">Box Score not ready yet. Try again during or after the game.</div>'; 
@@ -250,41 +276,23 @@
                 let html = '<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">';
                 
                 data.boxscore.players.forEach(team => {
-                    html += `<div><h4 style="color:#FDB927; border-bottom:1px solid #444; padding-bottom:5px;">${team.team.displayName}</h4>
-                    <table class="bs-table">
-                        <thead>
-                            <tr>
-                                <th>Player</th>
-                                <th>MIN</th>
-                                <th>PTS</th>
-                                <th>REB</th>
-                                <th>AST</th>
-                            </tr>
-                        </thead>
-                        <tbody>`;
+                    html += '<div><h4 style="color:#FDB927; border-bottom:1px solid #444; padding-bottom:5px;">' + team.team.displayName + '</h4><table class="bs-table"><thead><tr><th>Player</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th></tr></thead><tbody>';
                     
                     team.statistics.forEach(p => {
-                        const name = p.athlete?.displayName || 'Unknown';
+                        const name = p.athlete && p.athlete.displayName ? p.athlete.displayName : 'Unknown';
                         const stats = p.stats || [];
                         
-                        // Only show players who played
                         if(stats.length > 0 && stats[0] !== "0" && stats[0] !== "DNP") {
                             const min = stats[0] || '0';
                             const pts = stats[13] || '0';
                             const reb = stats[6] || '0';
                             const ast = stats[7] || '0';
                             
-                            html += `<tr>
-                                <td>${name}</td>
-                                <td>${min}</td>
-                                <td>${pts}</td>
-                                <td>${reb}</td>
-                                <td>${ast}</td>
-                            </tr>`;
+                            html += '<tr><td>' + name + '</td><td>' + min + '</td><td>' + pts + '</td><td>' + reb + '</td><td>' + ast + '</td></tr>';
                         }
                     });
                     
-                    html += `</tbody></table></div>`;
+                    html += '</tbody></table></div>';
                 });
                 
                 html += '</div>';
@@ -296,55 +304,60 @@
             }
         }
 
-        // --- 4. STATS (NBA CDN - Multiple sources for reliability) ---
+        // --- 4. STATS (Direct ESPN Leaders API) ---
         async function fetchStats() {
             const container = document.getElementById('stats-container');
             container.innerHTML = '<div class="loader">Loading Leaders...</div>';
             
             try {
-                // Try primary source first
-                let res = await fetch('/api/nba?type=stats');
-                let data = await res.json();
+                const res = await fetch('/api/nba?type=stats');
+                const data = await res.json();
                 
-                console.log('Stats data structure:', data); // DEBUG
+                console.log('Raw stats data:', data);
                 
-                let players = null;
+                let players = [];
                 
-                // Try different possible data structures
-                if (data.league?.standard?.players) {
+                // Check multiple possible data structures
+                if (data.league && data.league.standard && data.league.standard.players) {
+                    console.log('Using league.standard.players structure');
                     players = data.league.standard.players;
-                } else if (data.resultSets?.[0]?.rowSet) {
-                    // Alternative NBA API format
-                    const headers = data.resultSets[0].headers;
-                    players = data.resultSets[0].rowSet.map(row => {
-                        const obj = {};
-                        headers.forEach((h, i) => obj[h] = row[i]);
-                        return obj;
-                    });
-                } else if (Array.isArray(data)) {
-                    players = data;
+                } else if (data.categories && data.categories[0] && data.categories[0].leaders) {
+                    console.log('Using categories[0].leaders structure (ESPN)');
+                    players = data.categories[0].leaders.map(leader => ({
+                        personId: leader.athlete.id,
+                        firstName: leader.athlete.firstName || '',
+                        lastName: leader.athlete.lastName || leader.athlete.displayName,
+                        points: parseFloat(leader.value) * (leader.athlete.statistics ? leader.athlete.statistics.gamesPlayed : 20),
+                        gamesPlayed: leader.athlete.statistics ? leader.athlete.statistics.gamesPlayed : 20,
+                        teamSitesOnly: { teamTricode: leader.athlete.team ? leader.athlete.team.abbreviation : 'NBA' }
+                    }));
+                } else if (data.athletes) {
+                    console.log('Using direct athletes array');
+                    players = data.athletes;
+                } else {
+                    throw new Error('Unknown data structure: ' + JSON.stringify(Object.keys(data)));
                 }
                 
                 if (!players || players.length === 0) {
-                    throw new Error('No player data found');
+                    throw new Error('No player data in response');
                 }
                 
-                // Process players - handle different data formats
+                console.log('Found ' + players.length + ' players');
+                
+                // Process and sort
                 const processed = players
                     .filter(p => {
                         const games = p.gamesPlayed || p.GP || 0;
-                        return games > 5; // At least 5 games played
+                        return games > 5;
                     })
                     .map(p => {
                         const games = p.gamesPlayed || p.GP || 1;
                         const points = p.points || p.PTS || 0;
                         
                         return {
-                            id: p.personId || p.PLAYER_ID || Math.random(),
-                            name: p.firstName && p.lastName 
-                                ? `${p.firstName} ${p.lastName}` 
-                                : p.PLAYER_NAME || p.playerName || 'Unknown',
-                            team: p.teamSitesOnly?.teamTricode || p.TEAM_ABBREVIATION || p.teamAbbreviation || 'NBA',
+                            id: p.personId || p.PLAYER_ID || Math.random().toString(),
+                            name: (p.firstName && p.lastName) ? (p.firstName + ' ' + p.lastName) : (p.PLAYER_NAME || p.displayName || 'Unknown'),
+                            team: (p.teamSitesOnly && p.teamSitesOnly.teamTricode) ? p.teamSitesOnly.teamTricode : (p.TEAM_ABBREVIATION || p.teamAbbreviation || 'NBA'),
                             ppg: (points / games).toFixed(1)
                         };
                     })
@@ -353,40 +366,23 @@
                     .slice(0, 10);
 
                 if (processed.length === 0) {
-                    throw new Error('No valid player stats');
+                    throw new Error('No valid player stats after processing');
                 }
 
-                let html = `<table class="stats-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Player</th>
-                            <th>Team</th>
-                            <th>PPG</th>
-                        </tr>
-                    </thead>
-                    <tbody>`;
+                console.log('Processed players:', processed);
+
+                let html = '<table class="stats-table"><thead><tr><th>#</th><th>Player</th><th>Team</th><th>PPG</th></tr></thead><tbody>';
                 
                 processed.forEach((p, i) => {
-                    const img = `https://cdn.nba.com/headshots/nba/latest/260x190/${p.id}.png`;
-                    html += `<tr>
-                        <td><span class="rank">${i+1}</span></td>
-                        <td>
-                            <div class="player-info">
-                                <img src="${img}" class="player-head" onerror="this.src='https://via.placeholder.com/40'"> 
-                                ${p.name}
-                            </div>
-                        </td>
-                        <td>${p.team}</td>
-                        <td><span class="stat-val">${p.ppg}</span></td>
-                    </tr>`;
+                    const img = 'https://cdn.nba.com/headshots/nba/latest/260x190/' + p.id + '.png';
+                    html += '<tr><td><span class="rank">' + (i+1) + '</span></td><td><div class="player-info"><img src="' + img + '" class="player-head" onerror="this.src=\'https://via.placeholder.com/40\'"> ' + p.name + '</div></td><td>' + p.team + '</td><td><span class="stat-val">' + p.ppg + '</span></td></tr>';
                 });
                 
                 container.innerHTML = html + '</tbody></table>';
                 
             } catch(e) { 
                 console.error('Stats error:', e);
-                container.innerHTML = '<div class="error-msg">Stats temporarily unavailable. The NBA API may be updating. <br><small>Error: ' + e.message + '</small></div>'; 
+                container.innerHTML = '<div class="error-msg">Stats temporarily unavailable.<br><small>Error: ' + e.message + '</small></div>'; 
             }
         }
     </script>
