@@ -26,7 +26,6 @@
         /* News */
         .news-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
         .news-card { background: var(--card); border-radius: 8px; overflow: hidden; border: 1px solid #333; cursor: pointer; transition: 0.3s; }
-        .news-card:hover { transform: translateY(-5px); border-color: var(--blue); }
         .news-img { width: 100%; height: 180px; object-fit: cover; }
         .news-body { padding: 15px; }
         .news-title { font-weight: bold; font-size: 1rem; color: #fff; margin-bottom: 5px; }
@@ -41,7 +40,6 @@
         .team img { width: 60px; height: 60px; object-fit: contain; margin-bottom: 5px; }
         .score { font-size: 1.8rem; font-weight: bold; }
         .game-info { text-align: center; }
-        .status { color: var(--accent); font-weight: bold; font-size: 0.9rem; }
         .game-footer { background: #252525; padding: 10px 20px; text-align: right; border-top: 1px solid #333; }
         .box-btn { background: transparent; border: 1px solid #555; color: #ccc; padding: 6px 15px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
         .box-btn:hover { background: #fff; color: #000; }
@@ -54,8 +52,7 @@
         .bs-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
         .bs-table th { background: #111; color: #888; padding: 8px; text-align: center; position: sticky; top: 0; }
         .bs-table td { padding: 8px; border-bottom: 1px solid #333; text-align: center; color: #ddd; }
-        .bs-table td:first-child { text-align: left; color: #fff; font-weight: bold; width: 150px; }
-
+        
         /* Stats */
         .stats-table { width: 100%; border-collapse: collapse; margin-top: 20px; background: var(--card); border-radius: 8px; }
         .stats-table th { text-align: left; padding: 15px; background: #252525; color: #aaa; text-transform: uppercase; font-size: 0.8rem; }
@@ -114,7 +111,7 @@
 
         <section id="injuries" class="section">
             <h2 id="title-injuries">Injury Report</h2>
-            <p id="desc-injuries" style="color:#aaa; text-align:center; margin-top:20px;">Official real-time data requires a paid license.</p>
+            <p id="desc-injuries" style="color:#aaa; text-align:center; margin-top:20px;">Official data requires license.</p>
             <a href="https://www.espn.com/nba/injuries" target="_blank" class="external-link" id="link-injuries-espn">View on ESPN &rarr;</a>
         </section>
 
@@ -162,103 +159,105 @@
             document.getElementById('link-lineups-roto').innerHTML = d.links.linRoto;
         }
 
-        // --- 1. NEWS (ESPN JSON) ---
+        // --- FETCH WRAPPER ---
+        async function getData(type, params='') {
+            try {
+                const res = await fetch(`/api/nba?type=${type}${params}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                if (data.error) throw new Error(data.message || "API Error");
+                return data;
+            } catch (e) { console.warn(e); return null; }
+        }
+
+        // --- 1. NEWS ---
         async function fetchNews() {
             const container = document.getElementById('news-container');
             container.innerHTML = '<div class="loader">Loading...</div>';
-            try {
-                const res = await fetch('/api/nba?type=news');
-                const data = await res.json();
-                if(!data.articles) throw new Error("No news");
-                container.innerHTML = '';
-                data.articles.slice(0, 9).forEach(item => {
-                    const img = item.images[0]?.url || 'https://via.placeholder.com/300x200?text=NBA';
-                    container.innerHTML += `<div class="news-card" onclick="window.open('${item.links.web.href}')"><img src="${img}" class="news-img"><div class="news-body"><div class="news-title">${item.headline}</div></div></div>`;
-                });
-            } catch (e) { container.innerHTML = '<div class="loader">News unavailable.</div>'; }
+            const data = await getData('news');
+            if(!data || !data.articles) { container.innerHTML = '<div class="loader">Unavailable.</div>'; return; }
+            container.innerHTML = '';
+            data.articles.slice(0, 9).forEach(item => {
+                const img = item.images[0]?.url || 'https://via.placeholder.com/300x200?text=NBA';
+                container.innerHTML += `<div class="news-card" onclick="window.open('${item.links.web.href}')"><img src="${img}" class="news-img"><div class="news-body"><div class="news-title">${item.headline}</div></div></div>`;
+            });
         }
 
-        // --- 2. GAMES (ESPN) ---
+        // --- 2. GAMES ---
         async function fetchGames() {
             const date = document.getElementById('game-date').value;
             const container = document.getElementById('games-container');
             container.innerHTML = '<div class="loader">Loading...</div>';
-            try {
-                const res = await fetch(`/api/nba?type=scoreboard&date=${date}`);
-                const data = await res.json();
-                container.innerHTML = '';
-                if (!data.events || data.events.length === 0) { container.innerHTML = '<div class="loader">No games found.</div>'; return; }
-                data.events.forEach(e => {
-                    const h = e.competitions[0].competitors[0];
-                    const a = e.competitions[0].competitors[1];
-                    const btn = langData[currentLang].btns.box;
-                    container.innerHTML += `<div class="game-card"><div class="game-main"><div class="team"><img src="${a.team.logo}"><div>${a.team.abbreviation}</div></div><div class="score">${a.score} - ${h.score}</div><div class="team"><img src="${h.team.logo}"><div>${h.team.abbreviation}</div></div></div><div class="game-footer"><span style="float:left;color:#FDB927;font-weight:bold">${e.status.type.detail}</span><button class="box-btn" onclick="openBox('${e.id}', '${a.team.abbreviation}', '${h.team.abbreviation}')">${btn}</button></div></div>`;
-                });
-            } catch (e) { container.innerHTML = '<div class="error-msg">Error loading games.</div>'; }
+            const data = await getData('scoreboard', `&date=${date}`);
+            
+            if(!data || !data.events || data.events.length === 0) { 
+                container.innerHTML = '<div class="loader">No games scheduled.</div>'; 
+                return; 
+            }
+            container.innerHTML = '';
+            data.events.forEach(e => {
+                const h = e.competitions[0].competitors[0];
+                const a = e.competitions[0].competitors[1];
+                const btn = langData[currentLang].btns.box;
+                container.innerHTML += `<div class="game-card"><div class="game-main"><div class="team"><img src="${a.team.logo}"><div>${a.team.abbreviation}</div></div><div class="score">${a.score} - ${h.score}</div><div class="team"><img src="${h.team.logo}"><div>${h.team.abbreviation}</div></div></div><div class="game-footer"><span style="float:left;color:#FDB927;font-weight:bold">${e.status.type.detail}</span><button class="box-btn" onclick="openBox('${e.id}', '${a.team.abbreviation}', '${h.team.abbreviation}')">${btn}</button></div></div>`;
+            });
         }
 
-        // --- 3. BOX SCORE (ESPN STRUCTURE FIX) ---
+        // --- 3. BOX SCORE ---
         async function openBox(id, tA, tB) {
             const modal = document.getElementById('modal');
             const body = document.getElementById('modal-body');
             modal.style.display = 'flex';
             document.getElementById('modal-title').innerText = `${tA} vs ${tB}`;
-            body.innerHTML = '<div class="loader">Loading...</div>';
-            try {
-                const res = await fetch(`/api/nba?type=boxscore&gameId=${id}`);
-                const data = await res.json();
-                
-                // ESPN Summary yapısında veriler 'boxscore.teams' içinde olmayabilir.
-                // 'boxscore.players' içinde de olabilir.
-                // Hangi dizinin dolu olduğunu kontrol ediyoruz.
-                const box = data.boxscore.players || data.boxscore.teams;
+            body.innerHTML = '<div class="loader">Loading Stats...</div>';
 
-                if(!box) { body.innerHTML = '<div class="error-msg">Box Score not ready.</div>'; return; }
-                
-                let html = '<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">';
-                box.forEach(team => {
-                    const tName = team.team.displayName || team.team.abbreviation;
-                    html += `<div><h4 style="color:#FDB927; border-bottom:1px solid #444; padding-bottom:5px;">${tName}</h4><table class="bs-table"><thead><tr><th>Player</th><th>PTS</th><th>AST</th><th>REB</th></tr></thead><tbody>`;
-                    if(team.statistics) {
-                        team.statistics.forEach(p => {
-                            // stats array: [MIN, FG, 3PT, FT, OR, DR, REB, AST, STL, BLK, TO, PF, +/-, PTS]
-                            // Bu indexler ESPN için genelde sabittir: PTS=13, AST=7, REB=6
-                            const stats = p.stats;
-                            if(stats && stats[0] && stats[0] !== "0" && stats[0] !== "DNP") {
-                                html += `<tr><td>${p.athlete.displayName}</td><td>${stats[13]||0}</td><td>${stats[7]||0}</td><td>${stats[6]||0}</td></tr>`;
-                            }
-                        });
-                    }
-                    html += `</tbody></table></div>`;
-                });
-                html += '</div>';
-                body.innerHTML = html;
-            } catch (e) { body.innerHTML = '<div class="error-msg">Error details.</div>'; }
+            const data = await getData('boxscore', `&gameId=${id}`);
+            // ESPN Summary yapısı
+            const box = data?.boxscore?.players || data?.boxscore?.teams;
+
+            if(!box) { body.innerHTML = '<div class="error-msg">Box Score not ready.</div>'; return; }
+
+            let html = '<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">';
+            box.forEach(team => {
+                html += `<div><h4 style="color:#FDB927; border-bottom:1px solid #444; padding-bottom:5px;">${team.team.displayName}</h4><table class="bs-table"><thead><tr><th>Player</th><th>PTS</th><th>AST</th><th>REB</th></tr></thead><tbody>`;
+                if(team.statistics) {
+                    team.statistics.forEach(p => {
+                        const stats = p.stats;
+                        // Oynamayanları (DNP) filtrele
+                        if(stats && stats[0] && stats[0] !== "0" && stats[0] !== "0.0" && stats[0] !== "DNP") {
+                            html += `<tr><td>${p.athlete.displayName}</td><td>${stats[13]||0}</td><td>${stats[7]||0}</td><td>${stats[6]||0}</td></tr>`;
+                        }
+                    });
+                }
+                html += `</tbody></table></div>`;
+            });
+            html += '</div>';
+            body.innerHTML = html;
         }
 
-        // --- 4. STATS (ESPN WEB API FIX) ---
+        // --- 4. STATS (NBA CDN) ---
         async function fetchStats() {
             const container = document.getElementById('stats-container');
             container.innerHTML = '<div class="loader">Loading Leaders...</div>';
-            try {
-                const res = await fetch('/api/nba?type=stats');
-                const data = await res.json();
-                
-                if(!data.athletes) { container.innerHTML = '<div class="loader">No data available.</div>'; return; }
+            const data = await getData('stats');
+            
+            // CDN Veri Yapısı
+            const players = data?.league?.standard?.players;
+            if(!players) { container.innerHTML = '<div class="loader">Stats unavailable.</div>'; return; }
 
-                let html = `<table class="stats-table"><thead><tr><th>#</th><th>Player</th><th>Team</th><th>PPG</th></tr></thead><tbody>`;
-                data.athletes.forEach((p, i) => {
-                    // Güvenli veri okuma (Null Check)
-                    const name = p.athlete?.displayName || p.athlete?.fullName || "Unknown";
-                    const team = p.athlete?.team?.abbreviation || "-";
-                    // ESPN Web API istatistik değeri genellikle categories[0].values[0] içindedir
-                    const val = p.categories?.[0]?.values?.[0] || "0";
-                    const img = p.athlete?.headshot?.href || "https://via.placeholder.com/40";
+            // En çok sayı atan 10 oyuncu
+            const sorted = players
+                .filter(p => p.gamesPlayed > 0)
+                .sort((a,b) => b.points - a.points)
+                .slice(0, 10);
 
-                    html += `<tr><td><span class="rank">${i+1}</span></td><td><div class="player-info"><img src="${img}" class="player-head" onerror="this.src='https://via.placeholder.com/40'"> ${name}</div></td><td>${team}</td><td><span class="stat-val">${val}</span></td></tr>`;
-                });
-                container.innerHTML = html + '</tbody></table>';
-            } catch(e) { container.innerHTML = '<div class="error-msg">Stats unavailable.</div>'; }
+            let html = `<table class="stats-table"><thead><tr><th>#</th><th>Player</th><th>Team</th><th>PPG</th></tr></thead><tbody>`;
+            sorted.forEach((p, i) => {
+                const ppg = (p.points / p.gamesPlayed).toFixed(1);
+                const img = `https://cdn.nba.com/headshots/nba/latest/260x190/${p.personId}.png`;
+                html += `<tr><td><span class="rank">${i+1}</span></td><td><div class="player-info"><img src="${img}" class="player-head" onerror="this.src='https://via.placeholder.com/40'"> ${p.firstName} ${p.lastName}</div></td><td>${p.teamSitesOnly.teamTricode}</td><td><span class="stat-val">${ppg}</span></td></tr>`;
+            });
+            container.innerHTML = html + '</tbody></table>';
         }
     </script>
 </body>
