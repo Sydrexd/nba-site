@@ -278,19 +278,32 @@
                 data.boxscore.players.forEach(team => {
                     html += '<div><h4 style="color:#FDB927; border-bottom:1px solid #444; padding-bottom:5px;">' + team.team.displayName + '</h4><table class="bs-table"><thead><tr><th>Player</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th></tr></thead><tbody>';
                     
-                    team.statistics.forEach(p => {
-                        const name = p.athlete && p.athlete.displayName ? p.athlete.displayName : 'Unknown';
-                        const stats = p.stats || [];
-                        
-                        if(stats.length > 0 && stats[0] !== "0" && stats[0] !== "DNP") {
-                            const min = stats[0] || '0';
-                            const pts = stats[13] || '0';
-                            const reb = stats[6] || '0';
-                            const ast = stats[7] || '0';
+                    if (!team.statistics || team.statistics.length === 0) {
+                        html += '<tr><td colspan="5" style="text-align:center;color:#666;">No stats available yet</td></tr>';
+                    } else {
+                        let hasPlayers = false;
+                        team.statistics.forEach(p => {
+                            if (!p || !p.athlete) return;
                             
-                            html += '<tr><td>' + name + '</td><td>' + min + '</td><td>' + pts + '</td><td>' + reb + '</td><td>' + ast + '</td></tr>';
+                            const name = p.athlete.displayName || p.athlete.shortName || 'Unknown';
+                            const stats = p.stats || [];
+                            
+                            // Check if player actually played (has minutes)
+                            if(stats.length > 0 && stats[0] && stats[0] !== "0" && stats[0] !== "0:00" && stats[0] !== "DNP") {
+                                hasPlayers = true;
+                                const min = stats[0] || '0';
+                                const pts = stats[13] || '0';
+                                const reb = stats[6] || '0';
+                                const ast = stats[7] || '0';
+                                
+                                html += '<tr><td>' + name + '</td><td>' + min + '</td><td>' + pts + '</td><td>' + reb + '</td><td>' + ast + '</td></tr>';
+                            }
+                        });
+                        
+                        if (!hasPlayers) {
+                            html += '<tr><td colspan="5" style="text-align:center;color:#666;">Game hasn\'t started or stats not available</td></tr>';
                         }
-                    });
+                    }
                     
                     html += '</tbody></table></div>';
                 });
