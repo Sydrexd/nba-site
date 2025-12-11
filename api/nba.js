@@ -1,8 +1,8 @@
-const axios = require('axios');
-
+// Node.js yerleşik fetch kullanıyoruz (Ekstra kurulum gerektirmez)
 module.exports = async (req, res) => {
-    const { type, date, gameId, lang } = req.query;
+    const { type, date, gameId } = req.query;
 
+    // CORS Ayarları
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
     try {
         let apiUrl = '';
 
-        // 1. MAÇLAR (ESPN SCOREBOARD)
+        // 1. MAÇLAR (ESPN)
         if (type === 'scoreboard') {
             let dateParam = '';
             if (date) {
@@ -28,15 +28,14 @@ module.exports = async (req, res) => {
             apiUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard${dateParam}`;
         }
         
-        // 2. BOX SCORE (ESPN SUMMARY)
+        // 2. BOX SCORE (ESPN)
         else if (type === 'boxscore') {
             apiUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=${gameId}`;
         }
         
-        // 3. İSTATİSTİKLER (ESPN WEB API - YENİ VE SAĞLAM KAYNAK)
+        // 3. İSTATİSTİKLER (NBA CDN - En Güvenlisi)
         else if (type === 'stats') {
-            // Bu link ESPN web sitesinin kullandığı public API'dir.
-            apiUrl = 'https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/athletes?region=us&lang=en&contentorigin=espn&isqualified=true&page=1&limit=20&sort=offensive.avgPoints%3Adesc';
+            apiUrl = 'https://cdn.nba.com/static/json/liveData/playerstats/allplayers.json';
         }
         
         // 4. HABERLER (ESPN)
@@ -46,11 +45,18 @@ module.exports = async (req, res) => {
 
         if (!apiUrl) return res.status(400).json({ error: 'Gecersiz istek' });
 
-        const response = await axios.get(apiUrl);
-        res.status(200).json(response.data);
+        // Native Fetch Kullanımı
+        const response = await fetch(apiUrl);
+        
+        if (!response.ok) {
+            throw new Error(`API Hatasi: ${response.status}`);
+        }
+
+        const data = await response.json();
+        res.status(200).json(data);
 
     } catch (error) {
-        console.error("API Error:", error.message);
-        res.status(500).json({ error: 'Veri alinamadi', details: error.message });
+        console.error("Backend Error:", error);
+        res.status(500).json({ error: 'Sunucu Hatasi', details: error.message });
     }
 };
