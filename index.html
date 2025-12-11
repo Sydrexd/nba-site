@@ -304,7 +304,7 @@
             }
         }
 
-        // --- 4. STATS (Direct ESPN Leaders API) ---
+        // --- 4. STATS (Handle multiple API formats) ---
         async function fetchStats() {
             const container = document.getElementById('stats-container');
             container.innerHTML = '<div class="loader">Loading Leaders...</div>';
@@ -314,32 +314,67 @@
                 const data = await res.json();
                 
                 console.log('Raw stats data:', data);
+                console.log('Data keys:', Object.keys(data));
                 
                 let players = [];
                 
-                // Check multiple possible data structures
-                if (data.league && data.league.standard && data.league.standard.players) {
-                    console.log('Using league.standard.players structure');
-                    players = data.league.standard.players;
-                } else if (data.categories && data.categories[0] && data.categories[0].leaders) {
-                    console.log('Using categories[0].leaders structure (ESPN)');
-                    players = data.categories[0].leaders.map(leader => ({
-                        personId: leader.athlete.id,
-                        firstName: leader.athlete.firstName || '',
-                        lastName: leader.athlete.lastName || leader.athlete.displayName,
-                        points: parseFloat(leader.value) * (leader.athlete.statistics ? leader.athlete.statistics.gamesPlayed : 20),
-                        gamesPlayed: leader.athlete.statistics ? leader.athlete.statistics.gamesPlayed : 20,
-                        teamSitesOnly: { teamTricode: leader.athlete.team ? leader.athlete.team.abbreviation : 'NBA' }
+                // ESPN Leaders format (categories structure)
+                if (data.categories && Array.isArray(data.categories)) {
+                    console.log('Using ESPN categories structure');
+                    const pointsCategory = data.categories.find(cat => 
+                        cat.name === 'Points' || cat.displayName === 'Points' || cat.abbreviation === 'PTS'
+                    ) || data.categories[0];
+                    
+                    if (pointsCategory && pointsCategory.leaders) {
+                        players = pointsCategory.leaders.map(leader => {
+                            const ath = leader.athlete || {};
+                            return {
+                                personId: ath.id,
+                                firstName: ath.firstName || '',
+                                lastName: ath.lastName || ath.displayName || ath.shortName,
+                                points: parseFloat(leader.value || leader.displayValue || 0) * 
+                                       (ath.statistics && ath.statistics.length > 0 ? parseFloat(ath.statistics[0].splits.categories[0].stats[0].value) : 25),
+                                gamesPlayed: (ath.statistics && ath.statistics.length > 0 ? parseFloat(ath.statistics[0].splits.categories[0].stats[0].value) : 25),
+                                teamSitesOnly: { teamTricode: ath.team ? ath.team.abbreviation : 'NBA' }
+                            };
+                        });
+                    }
+                }
+                // NBA.com stats format (resultSets)
+                else if (data.resultSets && Array.isArray(data.resultSets) && data.resultSets.length > 0) {
+                    console.log('Using NBA.com resultSets structure');
+                    const resultSet = data.resultSets[0];
+                    const headers = resultSet.headers;
+                    const rows = resultSet.rowSet;
+                    
+                    // Find column indices
+                    const playerIdIdx = headers.indexOf('PLAYER_ID');
+                    const playerNameIdx = headers.indexOf('PLAYER');
+                    const teamIdx = headers.indexOf('TEAM_ABBREVIATION') || headers.indexOf('TEAM');
+                    const ptsIdx = headers.indexOf('PTS');
+                    const gpIdx = headers.indexOf('GP');
+                    
+                    players = rows.map(row => ({
+                        personId: row[playerIdIdx],
+                        firstName: '',
+                        lastName: row[playerNameIdx],
+                        points: parseFloat(row[ptsIdx]) * parseFloat(row[gpIdx]),
+                        gamesPlayed: parseFloat(row[gpIdx]),
+                        teamSitesOnly: { teamTricode: row[teamIdx] }
                     }));
-                } else if (data.athletes) {
-                    console.log('Using direct athletes array');
-                    players = data.athletes;
-                } else {
-                    throw new Error('Unknown data structure: ' + JSON.stringify(Object.keys(data)));
+                }
+                // NBA CDN format
+                else if (data.league && data.league.standard && data.league.standard.players) {
+                    console.log('Using NBA CDN league.standard.players structure');
+                    players = data.league.standard.players;
+                }
+                else {
+                    console.error('Unknown structure. Full data:', data);
+                    throw new Error('Unrecognized API response format');
                 }
                 
                 if (!players || players.length === 0) {
-                    throw new Error('No player data in response');
+                    throw new Error('No player data found in response');
                 }
                 
                 console.log('Found ' + players.length + ' players');
@@ -356,7 +391,7 @@
                         
                         return {
                             id: p.personId || p.PLAYER_ID || Math.random().toString(),
-                            name: (p.firstName && p.lastName) ? (p.firstName + ' ' + p.lastName) : (p.PLAYER_NAME || p.displayName || 'Unknown'),
+                            name: (p.firstName && p.lastName) ? (p.firstName + ' ' + p.lastName) : (p.PLAYER_NAME || p.displayName || p.lastName || 'Unknown'),
                             team: (p.teamSitesOnly && p.teamSitesOnly.teamTricode) ? p.teamSitesOnly.teamTricode : (p.TEAM_ABBREVIATION || p.teamAbbreviation || 'NBA'),
                             ppg: (points / games).toFixed(1)
                         };
