@@ -20,6 +20,7 @@ module.exports = async (req, res) => {
             let dateParam = '';
             if (date) {
                 const d = new Date(date);
+                // Ay ve Gün tek haneli ise başına 0 ekle
                 const yyyy = d.getFullYear();
                 const mm = String(d.getMonth() + 1).padStart(2, '0');
                 const dd = String(d.getDate()).padStart(2, '0');
