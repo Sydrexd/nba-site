@@ -1,8 +1,8 @@
-// Node.js yerleşik fetch kullanıyoruz (Ekstra kurulum gerektirmez)
-module.exports = async (req, res) => {
-    const { type, date, gameId } = req.query;
+const axios = require('axios');
 
-    // CORS Ayarları
+module.exports = async (req, res) => {
+    const { type, date, gameId, category } = req.query;
+
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -15,12 +15,11 @@ module.exports = async (req, res) => {
     try {
         let apiUrl = '';
 
-        // 1. MAÇLAR (ESPN)
+        // 1. MAÇLAR (SCOREBOARD)
         if (type === 'scoreboard') {
             let dateParam = '';
             if (date) {
                 const d = new Date(date);
-                // Ay ve Gün tek haneli ise başına 0 ekle
                 const yyyy = d.getFullYear();
                 const mm = String(d.getMonth() + 1).padStart(2, '0');
                 const dd = String(d.getDate()).padStart(2, '0');
@@ -29,35 +28,37 @@ module.exports = async (req, res) => {
             apiUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard${dateParam}`;
         }
         
-        // 2. BOX SCORE (ESPN)
+        // 2. BOX SCORE (SUMMARY)
         else if (type === 'boxscore') {
             apiUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=${gameId}`;
         }
         
-        // 3. İSTATİSTİKLER (NBA CDN - En Güvenlisi)
+        // 3. İSTATİSTİKLER (ESPN - ENGELLENMEZ)
         else if (type === 'stats') {
-            apiUrl = 'https://cdn.nba.com/static/json/liveData/playerstats/allplayers.json';
+            // ESPN'in kendi sitesinde kullandığı endpoint
+            apiUrl = 'https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/athletes?region=us&lang=en&contentorigin=espn&isqualified=true&page=1&limit=20&sort=offensive.avgPoints%3Adesc';
         }
         
-        // 4. HABERLER (ESPN)
+        // 4. HABERLER
         else if (type === 'news') {
             apiUrl = 'http://site.api.espn.com/apis/site/v2/sports/basketball/nba/news';
         }
 
         if (!apiUrl) return res.status(400).json({ error: 'Gecersiz istek' });
 
-        // Native Fetch Kullanımı
-        const response = await fetch(apiUrl);
-        
-        if (!response.ok) {
-            throw new Error(`API Hatasi: ${response.status}`);
-        }
+        const response = await axios.get(apiUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'application/json'
+            },
+            timeout: 5000 // 5 saniye bekle, gelmezse kapat
+        });
 
-        const data = await response.json();
-        res.status(200).json(data);
+        res.status(200).json(response.data);
 
     } catch (error) {
-        console.error("Backend Error:", error);
-        res.status(500).json({ error: 'Sunucu Hatasi', details: error.message });
+        console.error("Backend Error:", error.message);
+        // Hata olsa bile 200 dön ve boş veri ver ki frontend çökmesin
+        res.status(200).json({ error: true, message: error.message });
     }
 };
