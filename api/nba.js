@@ -1,7 +1,7 @@
 const axios = require('axios');
 
 module.exports = async (req, res) => {
-    const { type, date, gameId, category } = req.query;
+    const { type, date, gameId } = req.query;
 
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -15,8 +15,8 @@ module.exports = async (req, res) => {
     try {
         let apiUrl = '';
 
-        // 1. MAÇLAR (SCOREBOARD)
         if (type === 'scoreboard') {
+            // ESPN Scoreboard
             let dateParam = '';
             if (date) {
                 const d = new Date(date);
@@ -27,19 +27,14 @@ module.exports = async (req, res) => {
             }
             apiUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard${dateParam}`;
         }
-        
-        // 2. BOX SCORE (SUMMARY)
         else if (type === 'boxscore') {
+            // ESPN Summary
             apiUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=${gameId}`;
         }
-        
-        // 3. İSTATİSTİKLER (ESPN - ENGELLENMEZ)
         else if (type === 'stats') {
-            // ESPN'in kendi sitesinde kullandığı endpoint
-            apiUrl = 'https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/athletes?region=us&lang=en&contentorigin=espn&isqualified=true&page=1&limit=20&sort=offensive.avgPoints%3Adesc';
+            // NBA Homepage Widget Data (En garantisi bu)
+            apiUrl = 'https://stats.nba.com/js/data/widgets/home_season_leaders.json';
         }
-        
-        // 4. HABERLER
         else if (type === 'news') {
             apiUrl = 'http://site.api.espn.com/apis/site/v2/sports/basketball/nba/news';
         }
@@ -48,17 +43,17 @@ module.exports = async (req, res) => {
 
         const response = await axios.get(apiUrl, {
             headers: {
+                // NBA sitesini taklit eden headerlar (403 yememek için)
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                'Accept': 'application/json'
-            },
-            timeout: 5000 // 5 saniye bekle, gelmezse kapat
+                'Referer': 'https://www.nba.com/',
+                'Origin': 'https://www.nba.com'
+            }
         });
-
+        
         res.status(200).json(response.data);
 
     } catch (error) {
-        console.error("Backend Error:", error.message);
-        // Hata olsa bile 200 dön ve boş veri ver ki frontend çökmesin
-        res.status(200).json({ error: true, message: error.message });
+        console.error("API Error:", error.message);
+        res.status(500).json({ error: 'Veri alinamadi', details: error.message });
     }
 };
