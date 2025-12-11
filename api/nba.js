@@ -1,8 +1,9 @@
 const axios = require('axios');
 
 module.exports = async (req, res) => {
-    const { type, date, gameId, lang } = req.query;
+    const { type, date, gameId } = req.query;
 
+    // CORS: Her yerden erişime izin ver
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -13,44 +14,49 @@ module.exports = async (req, res) => {
     }
 
     try {
-        let apiUrl = '';
+        let targetUrl = '';
 
-        // 1. MAÇLAR (SCOREBOARD) -> ESPN
+        // 1. MAÇLAR (Scoreboard)
         if (type === 'scoreboard') {
-            let dateParam = '';
+            // Tarih varsa YYYYMMDD formatına çevir
+            let dateStr = '';
             if (date) {
-                // YYYY-MM-DD -> YYYYMMDD
                 const d = new Date(date);
+                // Ay ve Gün tek haneli ise başına 0 ekle
                 const yyyy = d.getFullYear();
                 const mm = String(d.getMonth() + 1).padStart(2, '0');
                 const dd = String(d.getDate()).padStart(2, '0');
-                dateParam = `?dates=${yyyy}${mm}${dd}`;
+                dateStr = `?dates=${yyyy}${mm}${dd}`;
             }
-            apiUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard${dateParam}`;
+            targetUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard${dateStr}`;
         }
         
-        // 2. BOX SCORE -> ESPN
+        // 2. DETAYLAR (Box Score)
         else if (type === 'boxscore') {
-            apiUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=${gameId}`;
+            targetUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=${gameId}`;
         }
         
-        // 3. İSTATİSTİKLER -> NBA CDN (Asla Engellenmez - %100 Gerçek)
+        // 3. İSTATİSTİKLER (Stats)
         else if (type === 'stats') {
-            apiUrl = 'https://cdn.nba.com/static/json/liveData/playerstats/allplayers.json';
+            targetUrl = 'https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/athletes?region=us&lang=en&contentorigin=espn&isqualified=true&page=1&limit=20&sort=offensive.avgPoints%3Adesc';
         }
         
-        // 4. HABERLER -> ESPN JSON API
+        // 4. HABERLER (News)
         else if (type === 'news') {
-            apiUrl = 'http://site.api.espn.com/apis/site/v2/sports/basketball/nba/news';
+            targetUrl = 'http://site.api.espn.com/apis/site/v2/sports/basketball/nba/news';
         }
 
-        if (!apiUrl) return res.status(400).json({ error: 'Gecersiz istek' });
+        if (!targetUrl) return res.status(400).json({ error: 'Gecersiz Istek' });
 
-        const response = await axios.get(apiUrl);
+        // ESPN'e istek at
+        const response = await axios.get(targetUrl);
+        
+        // Başarılı veriyi döndür
         res.status(200).json(response.data);
 
     } catch (error) {
+        // Hata olsa bile 200 dön ama içi boş olsun (Site çökmesin diye)
         console.error("API Error:", error.message);
-        res.status(500).json({ error: 'Veri alinamadi', details: error.message });
+        res.status(200).json({ error: true, message: error.message });
     }
 };
