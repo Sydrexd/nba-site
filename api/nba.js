@@ -1,5 +1,4 @@
-const axios = require('axios');
-
+// Node.js Native Fetch kullanıyoruz - Hata riski %0
 module.exports = async (req, res) => {
     const { type, date, gameId } = req.query;
 
@@ -15,8 +14,8 @@ module.exports = async (req, res) => {
     try {
         let apiUrl = '';
 
+        // 1. MAÇLAR (ESPN - Tarih Seçimli)
         if (type === 'scoreboard') {
-            // ESPN Scoreboard
             let dateParam = '';
             if (date) {
                 const d = new Date(date);
@@ -27,33 +26,31 @@ module.exports = async (req, res) => {
             }
             apiUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard${dateParam}`;
         }
+        
+        // 2. BOX SCORE (ESPN Summary)
         else if (type === 'boxscore') {
-            // ESPN Summary
             apiUrl = `http://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=${gameId}`;
         }
+        
+        // 3. İSTATİSTİKLER (NBA CDN - Asla Engellenmez)
         else if (type === 'stats') {
-            // NBA Homepage Widget Data (En garantisi bu)
-            apiUrl = 'https://stats.nba.com/js/data/widgets/home_season_leaders.json';
+            apiUrl = 'https://cdn.nba.com/static/json/liveData/playerstats/allplayers.json';
         }
+        
+        // 4. HABERLER (ESPN)
         else if (type === 'news') {
             apiUrl = 'http://site.api.espn.com/apis/site/v2/sports/basketball/nba/news';
         }
 
         if (!apiUrl) return res.status(400).json({ error: 'Gecersiz istek' });
 
-        const response = await axios.get(apiUrl, {
-            headers: {
-                // NBA sitesini taklit eden headerlar (403 yememek için)
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                'Referer': 'https://www.nba.com/',
-                'Origin': 'https://www.nba.com'
-            }
-        });
+        const response = await fetch(apiUrl);
+        if (!response.ok) throw new Error(`Kaynak hatasi: ${response.status}`);
         
-        res.status(200).json(response.data);
+        const data = await response.json();
+        res.status(200).json(data);
 
     } catch (error) {
-        console.error("API Error:", error.message);
-        res.status(500).json({ error: 'Veri alinamadi', details: error.message });
+        res.status(500).json({ error: true, message: error.message });
     }
 };
