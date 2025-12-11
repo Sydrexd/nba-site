@@ -26,6 +26,7 @@
         /* News */
         .news-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
         .news-card { background: var(--card); border-radius: 8px; overflow: hidden; border: 1px solid #333; cursor: pointer; transition: 0.3s; }
+        .news-card:hover { transform: translateY(-5px); border-color: var(--blue); }
         .news-img { width: 100%; height: 180px; object-fit: cover; }
         .news-body { padding: 15px; }
         .news-title { font-weight: bold; font-size: 1rem; color: #fff; margin-bottom: 5px; }
@@ -52,7 +53,8 @@
         .bs-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
         .bs-table th { background: #111; color: #888; padding: 8px; text-align: center; position: sticky; top: 0; }
         .bs-table td { padding: 8px; border-bottom: 1px solid #333; text-align: center; color: #ddd; }
-        
+        .bs-table td:first-child { text-align: left; color: #fff; font-weight: bold; width: 150px; }
+
         /* Stats */
         .stats-table { width: 100%; border-collapse: collapse; margin-top: 20px; background: var(--card); border-radius: 8px; }
         .stats-table th { text-align: left; padding: 15px; background: #252525; color: #aaa; text-transform: uppercase; font-size: 0.8rem; }
@@ -111,7 +113,7 @@
 
         <section id="injuries" class="section">
             <h2 id="title-injuries">Injury Report</h2>
-            <p id="desc-injuries" style="color:#aaa; text-align:center; margin-top:20px;">Official data requires license.</p>
+            <p id="desc-injuries" style="color:#aaa; text-align:center; margin-top:20px;">Official real-time data requires a paid license.</p>
             <a href="https://www.espn.com/nba/injuries" target="_blank" class="external-link" id="link-injuries-espn">View on ESPN &rarr;</a>
         </section>
 
@@ -199,7 +201,18 @@
                 const h = e.competitions[0].competitors[0];
                 const a = e.competitions[0].competitors[1];
                 const btn = langData[currentLang].btns.box;
-                container.innerHTML += `<div class="game-card"><div class="game-main"><div class="team"><img src="${a.team.logo}"><div>${a.team.abbreviation}</div></div><div class="score">${a.score} - ${h.score}</div><div class="team"><img src="${h.team.logo}"><div>${h.team.abbreviation}</div></div></div><div class="game-footer"><span style="float:left;color:#FDB927;font-weight:bold">${e.status.type.detail}</span><button class="box-btn" onclick="openBox('${e.id}', '${a.team.abbreviation}', '${h.team.abbreviation}')">${btn}</button></div></div>`;
+                container.innerHTML += `
+                    <div class="game-card">
+                        <div class="game-main">
+                            <div class="team"><img src="${a.team.logo}"><div>${a.team.abbreviation}</div></div>
+                            <div class="score">${a.score} - ${h.score}</div>
+                            <div class="team"><img src="${h.team.logo}"><div>${h.team.abbreviation}</div></div>
+                        </div>
+                        <div class="game-footer">
+                            <span style="float:left;color:#FDB927;font-weight:bold">${e.status.type.detail}</span>
+                            <button class="box-btn" onclick="openBox('${e.id}', '${a.team.abbreviation}', '${h.team.abbreviation}')">${btn}</button>
+                        </div>
+                    </div>`;
             });
         }
 
@@ -219,13 +232,16 @@
 
             let html = '<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">';
             box.forEach(team => {
-                html += `<div><h4 style="color:#FDB927; border-bottom:1px solid #444; padding-bottom:5px;">${team.team.displayName}</h4><table class="bs-table"><thead><tr><th>Player</th><th>PTS</th><th>AST</th><th>REB</th></tr></thead><tbody>`;
+                const teamName = team.team?.displayName || team.team?.name || 'Team';
+                html += `<div><h4 style="color:#FDB927; border-bottom:1px solid #444; padding-bottom:5px;">${teamName}</h4><table class="bs-table"><thead><tr><th>Player</th><th>PTS</th><th>AST</th><th>REB</th></tr></thead><tbody>`;
+                
                 if(team.statistics) {
                     team.statistics.forEach(p => {
-                        const stats = p.stats;
-                        // Oynamayanları (DNP) filtrele
+                        const name = p.athlete?.displayName || p.athlete?.shortName || "Unknown";
+                        const stats = p.stats; 
+                        // DNP kontrolü
                         if(stats && stats[0] && stats[0] !== "0" && stats[0] !== "0.0" && stats[0] !== "DNP") {
-                            html += `<tr><td>${p.athlete.displayName}</td><td>${stats[13]||0}</td><td>${stats[7]||0}</td><td>${stats[6]||0}</td></tr>`;
+                            html += `<tr><td>${name}</td><td>${stats[13]||0}</td><td>${stats[7]||0}</td><td>${stats[6]||0}</td></tr>`;
                         }
                     });
                 }
@@ -235,7 +251,7 @@
             body.innerHTML = html;
         }
 
-        // --- 4. STATS (NBA CDN) ---
+        // --- 4. STATS (NBA CDN - UNBLOCKABLE) ---
         async function fetchStats() {
             const container = document.getElementById('stats-container');
             container.innerHTML = '<div class="loader">Loading Leaders...</div>';
